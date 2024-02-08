@@ -94,7 +94,7 @@ impl<'info> Transfer<'info> {
     }
 }
 
-pub fn transfer_handler(ctx: Context<Transfer>) -> Result<()> {
+pub fn transfer_handler(ctx: Context<Transfer>, amount: u64) -> Result<()> {
     let sola = &ctx.accounts.sola;
 
     // Unfreeze the token account if it is frozen.
@@ -107,7 +107,7 @@ pub fn transfer_handler(ctx: Context<Transfer>) -> Result<()> {
     // Transfer the token in the source account to the recipient's destination token account.
     token_interface::transfer_checked(
         ctx.accounts.transfer_ctx(),
-        ctx.accounts.source.amount,
+        amount,
         ctx.accounts.master_mint.decimals,
     )?;
 

@@ -21,7 +21,7 @@ pub struct BurnSola<'info> {
 
     #[account(
         mut,
-        constraint = master_metadata.update_authority == *authority.key @ SolaError::UpdateAuthorityMismatch,
+        // constraint = master_metadata.update_authority == *authority.key @ SolaError::UpdateAuthorityMismatch,
         constraint = master_metadata.is_mutable @ SolaError::MetadataIsImmutable,
     )]
     pub master_metadata: Account<'info, MetadataAccount>,
@@ -79,7 +79,7 @@ impl<'info> BurnSola<'info> {
 pub fn burn_sola_handler(ctx: Context<BurnSola>, amount: u64) -> Result<()> {
     let sola = &ctx.accounts.sola;
 
-    require!(sola.is_burnable, SolaError::UnBunable);
+    require!(sola.is_burnable, SolaError::UnBurnable);
 
     thaw_account(
         ctx.accounts

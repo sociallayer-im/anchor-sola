@@ -19,6 +19,7 @@ pub struct MintSola<'info> {
     pub master_mint: InterfaceAccount<'info, Mint>,
 
     #[account(
+        mut,
         associated_token::authority = publisher,
         associated_token::mint = master_mint,
     )]

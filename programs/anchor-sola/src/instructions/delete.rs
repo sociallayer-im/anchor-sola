@@ -21,7 +21,7 @@ pub struct DeleteSola<'info> {
 
     #[account(
         mut,
-        constraint = master_metadata.update_authority == *authority.key @ SolaError::UpdateAuthorityMismatch,
+        // constraint = master_metadata.update_authority == *authority.key @ SolaError::UpdateAuthorityMismatch,
         constraint = master_metadata.is_mutable @ SolaError::MetadataIsImmutable,
     )]
     pub master_metadata: Account<'info, MetadataAccount>,
@@ -82,7 +82,7 @@ impl<'info> DeleteSola<'info> {
 pub fn delete_sola_handler(ctx: Context<DeleteSola>) -> Result<()> {
     let sola = &ctx.accounts.sola;
 
-    require!(sola.is_burnable, SolaError::UnBunable);
+    require!(sola.is_burnable, SolaError::UnBurnable);
 
     thaw_account(
         ctx.accounts

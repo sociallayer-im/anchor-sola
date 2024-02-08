@@ -43,6 +43,6 @@ pub enum SolaError {
 
     #[msg("The SOLA is not deletable because its either an app with installations or has reviews")]
     SOLANotDeletable,
-    #[msg("The SOLA is UnBunable.")]
-    UnBunable,
+    #[msg("The SOLA is UnBurnable.")]
+    UnBurnable,
 }

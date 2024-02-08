@@ -37,8 +37,8 @@ pub mod anchor_sola {
         Ok(())
     }
 
-    pub fn transfer(ctx: Context<Transfer>) -> Result<()> {
-        instructions::transfer_handler(ctx)?;
+    pub fn transfer(ctx: Context<Transfer>, amount: u64) -> Result<()> {
+        instructions::transfer_handler(ctx, amount)?;
         Ok(())
     }
 }
