@@ -1,9 +1,7 @@
 import { BN, Program } from "@coral-xyz/anchor";
 import * as anchor from "@coral-xyz/anchor";
-import * as spl from "@solana/spl-token";
 import { Keypair, Transaction } from "@solana/web3.js";
-import { getAssociatedTokenAddressSync } from "@solana/spl-token";
-import { deriveMasterMintAddress, AnchorSola, TOKEN_METADATA_PROGRAM_ID, getMasterMetadataAddress, deriveSolaAddress, wait } from "../src";
+import { AnchorSola, wait, SolaClient } from "../src";
 
 describe("anchor_sola", () => {
   // Configure the client to use the local cluster.
@@ -11,16 +9,9 @@ describe("anchor_sola", () => {
 
   const wallet = anchor.Wallet.local();
   const program = anchor.workspace.AnchorSola as Program<AnchorSola>;
-  anchor.getProvider().connection.sendEncodedTransaction
-  const payer = wallet.publicKey;
-  const authority = wallet.publicKey;
   const name = "My Sola";
 
-  const [masterMint] = deriveMasterMintAddress(name, program.provider.publicKey);
-  const masterToken = getAssociatedTokenAddressSync(masterMint, program.provider.publicKey);
-
-  const [masterMetadata] = getMasterMetadataAddress(name, masterMint);
-  let [sola] = deriveSolaAddress(masterMint);
+  const solaClient = new SolaClient(program, wallet.payer, name);
 
   before("airdrop", async () => {
     const res = await program.provider.connection.requestAirdrop(wallet.publicKey, 100);
@@ -51,48 +42,15 @@ describe("anchor_sola", () => {
       updatePrimarySaleHappenedViaToken: false,
     };
 
-    const accounts = {
-      masterMint,
-      masterToken,
-      masterMetadata,
-      sola,
-      payer,
-      publisher: authority,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      tokenProgram: spl.TOKEN_PROGRAM_ID,
-      associatedTokenProgram: spl.ASSOCIATED_TOKEN_PROGRAM_ID,
-      metadataProgram: TOKEN_METADATA_PROGRAM_ID,
-      rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-    };
-    console.log(`name:`, name);
-    console.log(`decimals:`, decimals);
-    console.log(`amount:`, amount);
-    console.log(`params:`, params);
-    console.log(`accounts:`, accounts);
+    const ix = await
+      solaClient.getCreateInstruction(decimals, amount, params);
 
-    const ix = await program.methods
-      .create(name, decimals, amount, params)
-      .accounts({
-        masterMint,
-        masterToken,
-        masterMetadata,
-        sola,
-        payer,
-        publisher: authority,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: spl.TOKEN_PROGRAM_ID,
-        associatedTokenProgram: spl.ASSOCIATED_TOKEN_PROGRAM_ID,
-        metadataProgram: TOKEN_METADATA_PROGRAM_ID,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      })
-      .signers([wallet.payer])
-      .instruction();
     console.log("Instruction:", ix);
 
     const tx = new Transaction().add(ix);
 
     console.log("Transaction:", tx);
-    const ts = await anchor.getProvider().sendAndConfirm(tx, [wallet.payer]);
+    const ts = await anchor.getProvider().sendAndConfirm(tx);
 
     console.log("Transaction signature:", ts);
   });
@@ -100,18 +58,10 @@ describe("anchor_sola", () => {
   it("mints new tokens to a sola", async () => {
     const amount = new BN(100);
 
-    const tx = await program.methods
-      .mint("My Sola", amount)
-      .accounts({
-        masterMint,
-        masterToken,
-        sola,
-        publisher: authority,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: spl.TOKEN_PROGRAM_ID,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      })
-      .rpc();
+    const ix = await solaClient.getMintInstruction(amount);
+
+    const tx = await
+      anchor.getProvider().sendAndConfirm(new Transaction().add(ix));
 
     console.log("Transaction signature:", tx);
   });
@@ -120,21 +70,10 @@ describe("anchor_sola", () => {
   it("transfers tokens from one account to another", async () => {
     const destination = Keypair.generate();
 
-    const tx = await program.methods
-      .transfer(new BN(10))
-      .accounts({
-        sola,
-        source: masterToken,
-        destination: getAssociatedTokenAddressSync(masterMint, destination.publicKey),
-        masterMint,
-        recipient: destination.publicKey,
-        authority: wallet.publicKey,
-        systemProgram: anchor.web3.SystemProgram.programId,
-        tokenProgram: spl.TOKEN_PROGRAM_ID,
-        associatedTokenProgram: spl.ASSOCIATED_TOKEN_PROGRAM_ID,
-      })
-      .signers([wallet.payer])
-      .rpc();
+    const ix = await solaClient.getTransferInstruction(new BN(10), destination.publicKey);
+
+    const tx = await
+      anchor.getProvider().sendAndConfirm(new Transaction().add(ix));;
 
     console.log("Transaction signature:", tx);
   });
@@ -143,37 +82,19 @@ describe("anchor_sola", () => {
   it("burns tokens from a sola", async () => {
     const amount = new BN(50);
 
-    const tx = await program.methods
-      .burn(amount)
-      .signers([wallet.payer])
-      .accounts({
-        sola,
-        masterMetadata,
-        masterToken,
-        masterMint,
-        authority,
-        tokenProgram: spl.TOKEN_PROGRAM_ID,
-      })
-      .rpc();
+    const ix = await solaClient.getBurnInstruction(amount);
+
+    const tx = await
+      anchor.getProvider().sendAndConfirm(new Transaction().add(ix));;
 
     console.log("Transaction signature:", tx);
   });
 
   it("deletes a sola", async () => {
-    const receiver = payer;
+    const ix = await solaClient.getDeleteInstruction();
 
-    const tx = await program.methods
-      .delete()
-      .accounts({
-        sola,
-        masterMetadata,
-        masterToken,
-        masterMint,
-        receiver,
-        authority,
-        tokenProgram: spl.TOKEN_PROGRAM_ID,
-      })
-      .rpc();
+    const tx = await
+      anchor.getProvider().sendAndConfirm(new Transaction().add(ix));;
 
     console.log("Transaction signature:", tx);
   });
