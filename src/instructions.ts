@@ -1,5 +1,5 @@
 import { Program, BN, web3 } from "@coral-xyz/anchor";
-import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-token";
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { AnchorSola } from "./anchor_sola";
 import { deriveMasterMintAddress, deriveSolaAddress, getMasterMetadataAddress } from "./addresses";

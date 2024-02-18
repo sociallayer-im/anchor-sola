@@ -1,0 +1,11 @@
+[submodule "mpl-token-metadata"]
+    path = deps/mpl-token-metadata
+    url = https://github.com/metaplex-foundation/mpl-token-metadata.git
+    branch = main
+    tag = mpl-token-metadata@v3.2.3
+
+[submodule "solana-program-library"]
+    path = deps/solana-program-library
+    url = https://github.com/solana-labs/solana-program-library.git
+    branch = master
+    tag = token-2022-v0.9.0
