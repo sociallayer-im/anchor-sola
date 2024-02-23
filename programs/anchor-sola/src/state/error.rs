@@ -14,6 +14,12 @@ pub enum SolaError {
     #[msg("The provided curator account did not match the one assigned")]
     CuratorMismatch,
 
+    #[msg("The provided metadata not found curators.")]
+    CuratorNotFound,
+    #[msg("The profile curators is so much!")]
+    CuratorsIsSoMuch,
+    #[msg("The publisher is not the profile creator.")]
+    NotProfileCreator,
     #[msg("The metadata of the SOLA is marked as immutable")]
     MetadataIsImmutable,
 

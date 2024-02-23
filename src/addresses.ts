@@ -1,21 +1,39 @@
 import { PublicKey } from "@solana/web3.js";
 import { PROGRAM_ID, TOKEN_METADATA_PROGRAM_ID } from "./common";
+import BN from "bn.js";
 
 /**
  * Derive the PDA of the master mint account.
  * @export
- * @param {string} name
- * @param {PublicKey} publisher
+ * @param {BN} profileId
  * @returns {[PublicKey, number]}
  */
-export function deriveMasterMintAddress(name: string, publisher: PublicKey): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync([Buffer.from("mint"), publisher.toBytes(), Buffer.from(name)], PROGRAM_ID);
+export function deriveMasterMintAddress(profileId: BN): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("mint"), profileId.toBuffer("be", 8)], PROGRAM_ID);
 }
 
-export function getMasterMetadataAddress(name: string, masterMint: PublicKey): [PublicKey, number] {
+export function deriveSolaProfileGlobalAddress(): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("sola_profile_global")], PROGRAM_ID);
+}
+export function deriveSolaCreatorAddress(creator: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("sola_profile_creator"), deriveSolaProfileGlobalAddress()[0].toBytes(), creator.toBytes()], PROGRAM_ID);
+}
+export function deriveSolaDefaultProfilesAddress(publisher: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("sola_default_profiles"), deriveSolaProfileGlobalAddress()[0].toBytes(), publisher.toBytes()], PROGRAM_ID);
+}
+export function getMasterMetadataAddress(masterMint: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync([Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBytes(), masterMint.toBytes()], TOKEN_METADATA_PROGRAM_ID);
 }
+export function getMasterEditionAddress(masterMint: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBytes(), masterMint.toBytes(), Buffer.from("edition")], TOKEN_METADATA_PROGRAM_ID);
+}
+export function getTokenRecordAddress(masterMint: PublicKey, masterToken: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBytes(), masterMint.toBytes(), Buffer.from("token_record"), masterToken.toBytes()], TOKEN_METADATA_PROGRAM_ID);
+}
 
+export function deriveSolaProfileAddress(masterMint: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("sola_profile"), masterMint.toBytes()], PROGRAM_ID);
+}
 /**
  * Derive the PDA of the associated SOLA program account.
  * @export

@@ -1,15 +1,56 @@
 mod instructions;
+mod profile;
 mod state;
 use anchor_lang::prelude::*;
 use instructions::*;
+use profile::*;
 use state::CreateSolaParams;
 
 declare_id!("13QsVLZkzf9gRiFbFrUK9xhLa6QukFEdLxJUfbuta33L");
 
 #[program]
 pub mod anchor_sola {
-
     use super::*;
+
+    pub fn initializee(
+        ctx: Context<InitializeeProfileGlobal>,
+        chainid: u64,
+        uri: String,
+    ) -> Result<()> {
+        profile::handle_initializee_profile_global(ctx, chainid, uri)?;
+        Ok(())
+    }
+
+    pub fn mint_profile(
+        ctx: Context<MintProfile>,
+        profile_id: u64,
+        params: MintProfileParams,
+    ) -> Result<()> {
+        profile::mint_profile_handler(ctx, profile_id, params)?;
+        Ok(())
+    }
+
+    pub fn mint_default_profile(
+        ctx: Context<MintDefaultProfile>,
+        params: MintProfileParams,
+    ) -> Result<()> {
+        profile::mint_default_profile_handler(ctx, params)?;
+        Ok(())
+    }
+
+    pub fn set_profile_creator(ctx: Context<SetProfileCreator>, status: bool) -> Result<()> {
+        profile::handle_set_profile_creator(ctx, status)?;
+        Ok(())
+    }
+
+    pub fn update_profile_global(
+        ctx: Context<UpdateProfileGlobal>,
+        chainid: u64,
+        uri: String,
+    ) -> Result<()> {
+        profile::handle_update_profile_global(ctx, chainid, uri)?;
+        Ok(())
+    }
 
     pub fn create(
         ctx: Context<CreateSola>,

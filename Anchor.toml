@@ -17,14 +17,9 @@ wallet = "/Users/cupnfish/.config/solana/id.json"
 [scripts]
 git = "git submodule update --init --recursive"
 metadata = "cd ./deps/mpl-token-metadata && pnpm programs:build"
-token2022 = "cd ./deps/solana-program-library/token/program-2022 && cargo build-sbf"
-init = "anchor run git && anchor run metadata && anchor run token2022"
+init = "anchor run git && anchor run metadata"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [[test.genesis]]
 address = "metaqbxxUerdq28cj1RbAWkYQm3ybzjb6a8bt518x1s"
 program = "./deps/mpl-token-metadata/programs/.bin/token_metadata.so"
-
-[[test.genesis]]
-address = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb"
-program = "./deps/solana-program-library/target/deploy/spl_token_2022.so"

@@ -22,3 +22,14 @@ export interface CreateSolaParams {
     updateAuthorityIsSigner: boolean;
     updatePrimarySaleHappenedViaToken: boolean;
 }
+
+
+export interface MintProfileParams {
+    name: string,
+    creators: CreatorsParam[];
+    curator: PublicKey;
+    sellerFeeBasisPoints: number;
+    symbol: string;
+    uri: string;
+    isMutable: boolean;
+}
