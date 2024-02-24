@@ -12,15 +12,6 @@ describe("anchor_sola", () => {
 
   const solaClient = new SolaClient(program, wallet.payer);
 
-  const data = Buffer.from(
-    Uint8Array.of(0, ...new BN(256000).toArray("le", 4))
-  );
-  /// 用于增加可计算时间的，具体不知道参数是怎么设置的。。
-  const additionalComputeBudgetInstruction = new TransactionInstruction({
-    keys: [],
-    programId: new PublicKey("ComputeBudget111111111111111111111111111111"),
-    data,
-  });
 
   before("airdrop", async () => {
     const res = await program.provider.connection.requestAirdrop(wallet.publicKey, 100);
@@ -41,6 +32,12 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
+    await wait(1000);
+
+    const res = await anchor.getProvider().connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
     const global = await program.account.solaProfileGlobal.all();
     console.log("init global:", global);
   });
@@ -56,6 +53,13 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
+    await wait(1000);
+
+    const res = await anchor.getProvider().connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
+
     const isProfileCreator = await program.account.isProfileCreator.all();
     console.log("isProfileCreator:", isProfileCreator);
   });
@@ -70,6 +74,12 @@ describe("anchor_sola", () => {
       anchor.getProvider().sendAndConfirm(new Transaction().add(ix), [], { skipPreflight: true });
 
     console.log("Transaction signature:", tx);
+
+    await wait(1000);
+
+    const res = await anchor.getProvider().connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
 
     const global = await program.account.solaProfileGlobal.all();
     console.log("update global:", global);
@@ -107,15 +117,23 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
+    await wait(1000);
+
+    const res = await anchor.getProvider().connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
+
     const global = await program.account.solaProfileGlobal.all();
     console.log("update global:", global);
     const profile = await program.account.solaProfile.all();
     console.log("all profile:", profile);
   });
+
   it("mint a default profile", async () => {
     const test_profile_owner = Keypair.generate();
     const params = {
-      name: "MyProfile",
+      name: "MyDefaultProfile",
       creators: [
         {
           address: wallet.publicKey,
@@ -144,12 +162,65 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
+    await wait(1000);
+
+    const res = await anchor.getProvider().connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
     const global = await program.account.solaProfileGlobal.all();
     console.log("update global:", global);
     const profile = await program.account.solaProfile.all();
     console.log("all profile:", profile);
     const defaultProfile = await program.account.defaultProfileId.all();
     console.log("all profile:", defaultProfile);
+  });
+
+  it("mint a group profile", async () => {
+    const test_profile_owner = Keypair.generate();
+    const params = {
+      name: "MyGroupProfile",
+      creators: [
+        {
+          address: wallet.publicKey,
+          share: 100,
+        },
+      ],
+      curator: wallet.publicKey,
+      sellerFeeBasisPoints: 0,
+      symbol: "MSOL",
+      uri: "https://example.com/my-sola.json",
+      isMutable: true,
+    };
+
+    const ix = await
+      solaClient.getMintGroupProfileInstruction(params, test_profile_owner.publicKey);
+
+    console.log("Instruction:", ix);
+
+    const tx = await
+      anchor.getProvider().sendAndConfirm(
+        new Transaction()
+          // 加钱！！！
+          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }))
+          .add(ix),
+        [], { skipPreflight: true });
+    console.log("Transaction signature:", tx);
+
+    await wait(1000);
+
+    const res = await anchor.getProvider().connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
+
+
+    const global = await program.account.solaProfileGlobal.all();
+    console.log("update global:", global);
+    const profile = await program.account.solaProfile.all();
+    console.log("all profile:", profile);
+    const defaultProfile = await program.account.defaultProfileId.all();
+    console.log("default profile:", defaultProfile);
   });
   // it("creates a new sola", async () => {
 

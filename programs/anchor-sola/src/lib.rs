@@ -10,6 +10,7 @@ declare_id!("13QsVLZkzf9gRiFbFrUK9xhLa6QukFEdLxJUfbuta33L");
 
 #[program]
 pub mod anchor_sola {
+
     use super::*;
 
     pub fn initializee(
@@ -23,19 +24,11 @@ pub mod anchor_sola {
 
     pub fn mint_profile(
         ctx: Context<MintProfile>,
-        profile_id: u64,
+        profile_id: Option<u64>,
         params: MintProfileParams,
-    ) -> Result<()> {
-        profile::mint_profile_handler(ctx, profile_id, params)?;
-        Ok(())
-    }
-
-    pub fn mint_default_profile(
-        ctx: Context<MintDefaultProfile>,
-        params: MintProfileParams,
-    ) -> Result<()> {
-        profile::mint_default_profile_handler(ctx, params)?;
-        Ok(())
+    ) -> Result<u64> {
+        let profile_id = profile::mint_profile_handler(ctx, profile_id, params)?;
+        Ok(profile_id)
     }
 
     pub fn set_profile_creator(ctx: Context<SetProfileCreator>, status: bool) -> Result<()> {

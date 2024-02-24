@@ -3,7 +3,7 @@ import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "@solana/spl-
 import { getAssociatedTokenAddressSync } from "@solana/spl-token";
 import { AnchorSola } from "./anchor_sola";
 import { deriveMasterMintAddress, deriveSolaProfileAddress, deriveSolaProfileGlobalAddress, getMasterEditionAddress, getMasterMetadataAddress, getTokenRecordAddress, deriveSolaCreatorAddress, deriveSolaDefaultProfilesAddress } from "./addresses";
-import { MintProfileParams, TOKEN_METADATA_PROGRAM_ID } from "./common";
+import { MintProfileParams, PROGRAM_ID, TOKEN_METADATA_PROGRAM_ID } from "./common";
 
 export class SolaClient {
     program: Program<AnchorSola>;
@@ -96,13 +96,10 @@ export class SolaClient {
         return ix;
     }
 
-
-    async getMintProfileInstruction(profileId: BN, params: MintProfileParams, to: web3.PublicKey, payer?: web3.Keypair): Promise<web3.TransactionInstruction> {
-        // TODO: 这里有问题，如果ix组成的tx交易失败的话，这里是需要撤回的
-        this.syncProfile(profileId, to);
-
+    private async _getMintProfileInstruction(profileId: BN, params: MintProfileParams, to: web3.PublicKey, addressDefaultProfiles?: web3.PublicKey, payer?: web3.Keypair): Promise<web3.TransactionInstruction> {
         const accounts = {
             solaProfileGlobal: this.solaProfileGlobal,
+            addressDefaultProfiles: addressDefaultProfiles ? addressDefaultProfiles : null,
             solaCreator: deriveSolaCreatorAddress(this.solaCreator.publicKey)[0],
             masterToken: this.masterToken,
             masterMint: this.masterMint,
@@ -131,7 +128,22 @@ export class SolaClient {
         return ix;
     }
 
+
+    async getMintProfileInstruction(profileId: BN, params: MintProfileParams, to: web3.PublicKey, payer?: web3.Keypair): Promise<web3.TransactionInstruction> {
+        // TODO: 这里有问题，如果ix组成的tx交易失败的话，这里是需要撤回的
+        this.syncProfile(profileId, to);
+
+        const ix = await this._getMintProfileInstruction(profileId, params, to, null, payer);
+
+        return ix;
+    }
+
     private syncProfile(profileId: BN, to: web3.PublicKey) {
+        if (this.profileId == profileId) {
+            this.masterToken = getAssociatedTokenAddressSync(this.masterMint, to, false, TOKEN_2022_PROGRAM_ID);
+            return;
+        }
+        this.profileId = profileId;
         this.masterMint = deriveMasterMintAddress(profileId)[0];
         this.masterEdition = getMasterEditionAddress(this.masterMint)[0];
         this.masterMetadata = getMasterMetadataAddress(this.masterMint)[0];
@@ -142,36 +154,24 @@ export class SolaClient {
 
     async getMintDefaultProfileInstruction(params: MintProfileParams, to: web3.PublicKey, payer?: web3.Keypair): Promise<web3.TransactionInstruction> {
         const profileId = (await this.program.account.solaProfileGlobal.all()).pop().account.counter;
+        console.log('default profileId:', profileId);
         // TODO: 这里有问题，如果ix组成的tx交易失败的话，这里是需要撤回的
         this.syncProfile(profileId, to);
 
-        const accounts = {
-            solaProfileGlobal: this.solaProfileGlobal,
-            solaCreator: deriveSolaCreatorAddress(this.solaCreator.publicKey)[0],
-            addressDefaultProfiles: deriveSolaDefaultProfilesAddress(this.solaCreator.publicKey)[0],
-            masterToken: this.masterToken,
-            masterMint: this.masterMint,
-            masterMetadata: this.masterMetadata,
-            masterEdition: this.masterEdition,
-            tokenRecord: this.tokenProgram,
-            solaProfile: this.solaProfile,
-            payer: payer ? payer.publicKey : this.wallet.publicKey,
-            publisher: this.solaCreator.publicKey,
-            to,
-            systemProgram: web3.SystemProgram.programId,
-            tokenProgram: TOKEN_2022_PROGRAM_ID,
-            splAtaProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-            metadataProgram: TOKEN_METADATA_PROGRAM_ID,
-            sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
-            rent: web3.SYSVAR_RENT_PUBKEY,
-        };
+        const ix = await this._getMintProfileInstruction(profileId, params, to, deriveSolaDefaultProfilesAddress(this.solaCreator.publicKey)[0], payer);
+
+        return ix;
+    }
 
 
-        const ix = await this.program.methods
-            .mintDefaultProfile(params)
-            .accounts(accounts)
-            .signers(payer ? [payer, this.solaCreator] : [this.wallet, this.solaCreator])
-            .instruction();
+    async getMintGroupProfileInstruction(params: MintProfileParams, to: web3.PublicKey, payer?: web3.Keypair): Promise<web3.TransactionInstruction> {
+        const profileId = (await this.program.account.solaProfileGlobal.all()).pop().account.counter;
+        console.log('default profileId:', profileId);
+        // TODO: 这里有问题，如果ix组成的tx交易失败的话，这里是需要撤回的
+        this.syncProfile(profileId, to);
+
+        const ix = await this._getMintProfileInstruction(profileId, params, to, null, payer);
+
 
         return ix;
     }
