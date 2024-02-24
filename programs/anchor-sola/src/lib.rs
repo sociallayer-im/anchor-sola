@@ -41,6 +41,44 @@ pub mod anchor_sola {
         Ok(())
     }
 
+    pub fn register(
+        ctx: Context<Register>,
+        class_id: u64,
+        profile_id: u64,
+        params: RegisterParams,
+    ) -> Result<()> {
+        profile::handle_register(ctx, class_id, profile_id, params)?;
+        Ok(())
+    }
+
+    pub fn set_dispatcher(ctx: Context<SetDispatcher>, controller_id: u64) -> Result<()> {
+        profile::handle_set_dispatcher(ctx, controller_id)?;
+        Ok(())
+    }
+
+    pub fn set_default_dispatcher(ctx: Context<SetDefaultDispatcher>) -> Result<()> {
+        profile::handle_set_default_dispatcher(ctx)?;
+        Ok(())
+    }
+
+    pub fn set_group_controller(
+        ctx: Context<SetGroupController>,
+        controller_id: u64,
+        params: SetGroupControllerParams,
+    ) -> Result<()> {
+        profile::handle_set_group_controller(ctx, controller_id, params)?;
+        Ok(())
+    }
+
+    pub fn set_token_class_state(
+        ctx: Context<SetTokenClassState>,
+        class_id: u64,
+        params: SetTokenClassStateParams,
+    ) -> Result<()> {
+        profile::handle_set_token_class_state(ctx, class_id, params)?;
+        Ok(())
+    }
+
     pub fn update_profile_global(
         ctx: Context<UpdateProfileGlobal>,
         chainid: u64,

@@ -30,7 +30,7 @@ pub fn handle_initializee_profile_global(
 
     **profile_global = SolaProfileGlobal {
         counter: 1,
-        class_counter: 0,
+        class_counter: 1,
         owner: ctx.accounts.owner.key(),
         chainid,
         base_uri: uri,

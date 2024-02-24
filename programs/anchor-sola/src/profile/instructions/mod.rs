@@ -1,11 +1,21 @@
 mod burn_profile;
 mod initialize;
 mod mint_profile;
+mod register;
+mod set_default_dispatcher;
+mod set_dispatcher;
+mod set_group_controller;
 mod set_profile_creator;
+mod set_token_class_state;
 mod update_global;
 
 pub use burn_profile::*;
 pub use initialize::*;
 pub use mint_profile::*;
+pub use register::*;
+pub use set_default_dispatcher::*;
+pub use set_dispatcher::*;
+pub use set_group_controller::*;
 pub use set_profile_creator::*;
+pub use set_token_class_state::*;
 pub use update_global::*;

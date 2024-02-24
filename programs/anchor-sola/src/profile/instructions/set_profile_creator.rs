@@ -10,7 +10,7 @@ pub struct SetProfileCreator<'info> {
         bump,
         has_one = owner
     )]
-    pub sola_profile_global: Box<Account<'info, SolaProfileGlobal>>,
+    pub sola_profile_global: Account<'info, SolaProfileGlobal>,
     #[account(
         init_if_needed,
         payer = payer,

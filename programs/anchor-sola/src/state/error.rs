@@ -2,6 +2,8 @@ use anchor_lang::error_code;
 
 #[error_code]
 pub enum SolaError {
+    #[msg("no permission")]
+    NoPermission,
     #[msg("When mint default profiles, profile id must be null.")]
     ProfileIdNotNull,
     #[msg("Not found default profiles in accounts.")]
