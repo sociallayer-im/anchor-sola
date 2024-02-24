@@ -2,6 +2,7 @@ import { BN, Program } from "@coral-xyz/anchor";
 import * as anchor from "@coral-xyz/anchor";
 import { ComputeBudgetProgram, Keypair, PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
 import { AnchorSola, wait, SolaClient } from "../src";
+import { expect } from "chai";
 
 describe("anchor_sola", () => {
   // Configure the client to use the local cluster.
@@ -222,6 +223,71 @@ describe("anchor_sola", () => {
     const defaultProfile = await program.account.defaultProfileId.all();
     console.log("default profile:", defaultProfile);
   });
+
+
+  it("burn a profile", async () => {
+    const test_profile_owner = Keypair.generate();
+    const params = {
+      name: "MyTestProfile",
+      creators: [
+        {
+          address: wallet.publicKey,
+          share: 100,
+        },
+      ],
+      curator: wallet.publicKey,
+      sellerFeeBasisPoints: 0,
+      symbol: "MSOL",
+      uri: "https://example.com/my-sola.json",
+      isMutable: true,
+    };
+
+    const ix = await
+      solaClient.getMintDefaultProfileInstruction(params, test_profile_owner.publicKey);
+
+    console.log("Minting profile instruction:", ix);
+
+    const tx = await
+      anchor.getProvider().sendAndConfirm(
+        new Transaction()
+          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }))
+          .add(ix),
+        [], { skipPreflight: true });
+
+    console.log("Minting transaction signature:", tx);
+
+    await wait(1000);
+
+    // Get the profile address and burn it
+    const profile = await program.account.solaProfile.fetch(solaClient.solaProfile);
+    console.log("Profile before burn:", profile);
+
+    const burnIx = await solaClient.getBurnProfileInstruction(solaClient.profileId, test_profile_owner);
+
+    console.log("Burning profile instruction:", burnIx);
+
+    const burnTx = await
+      anchor.getProvider().sendAndConfirm(
+        new Transaction()
+          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }))
+          .add(burnIx),
+        [test_profile_owner], { skipPreflight: true });
+
+    console.log("Burning transaction signature:", burnTx);
+
+    await wait(1000);
+
+    // Verify that the profile was burned
+
+    try {
+      await program.account.solaProfile.fetch(solaClient.solaProfile);
+    } catch (error) {
+      console.log("Profile after burn:", error);
+    }
+
+
+  });
+
   // it("creates a new sola", async () => {
 
   //   const decimals = 2;

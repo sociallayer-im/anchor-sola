@@ -154,6 +154,98 @@ export type AnchorSola = {
       "returns": "u64"
     },
     {
+      "name": "burnProfile",
+      "accounts": [
+        {
+          "name": "solaProfileGlobal",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "addressDefaultProfiles",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "masterToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterEdition",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solaProfile",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "close",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "splAtaProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "profileId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "setProfileCreator",
       "accounts": [
         {
@@ -608,6 +700,12 @@ export type AnchorSola = {
             "type": "publicKey"
           },
           {
+            "name": "addressDefaultProfiles",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
             "name": "owner",
             "type": "publicKey"
           },
@@ -795,101 +893,106 @@ export type AnchorSola = {
   "errors": [
     {
       "code": 6000,
+      "name": "ProfileIdNotNull",
+      "msg": "When mint default profiles, profile id must be null."
+    },
+    {
+      "code": 6001,
       "name": "NotFoundDefaultProfiles",
       "msg": "Not found default profiles in accounts."
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "FoundDefaultProfiles",
       "msg": "Found default profiles in accounts."
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "CannotReviewOwned",
       "msg": "You cannot create a review for an SOLA that you currently own or published"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "CuratorAlreadySet",
       "msg": "There is already a verified curator assigned"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "CuratorAuthorityMismatch",
       "msg": "The expected curator authority did not match expected"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "CuratorMismatch",
       "msg": "The provided curator account did not match the one assigned"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "CuratorNotFound",
       "msg": "The provided metadata not found curators."
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "CuratorsIsSoMuch",
       "msg": "The profile curators is so much!"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "MetadataIsImmutable",
       "msg": "The metadata of the SOLA is marked as immutable"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "RatingOutOfBounds",
       "msg": "The rating for a review must be between 0 and 5"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "SupplyReduction",
       "msg": "Updated supply is less than the original supply set on creation"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "SuspendedInstallation",
       "msg": "Attempting to install a currently suspended SOLA"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "UnauthorizedInstall",
       "msg": "The access account provided is not associated with the wallet"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "UnknownCreator",
       "msg": "A provided creator was not found on the metadata account"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "UpdateAuthorityMismatch",
       "msg": "The signer did not match the update authority of the metadata account or the owner"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "UpdateReviewAuthorityMismatch",
       "msg": "The signing authority for the SOLA update did not match the review authority"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "UriExceedsMaxLength",
       "msg": "The metadata URI provided exceeds the maximum length"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "SOLANotDeletable",
       "msg": "The SOLA is not deletable because its either an app with installations or has reviews"
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "UnBurnable",
       "msg": "The SOLA is UnBurnable."
     }
@@ -1052,6 +1155,98 @@ export const IDL: AnchorSola = {
       "returns": "u64"
     },
     {
+      "name": "burnProfile",
+      "accounts": [
+        {
+          "name": "solaProfileGlobal",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "addressDefaultProfiles",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "masterToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterEdition",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solaProfile",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "owner",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "close",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "splAtaProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "profileId",
+          "type": "u64"
+        }
+      ]
+    },
+    {
       "name": "setProfileCreator",
       "accounts": [
         {
@@ -1506,6 +1701,12 @@ export const IDL: AnchorSola = {
             "type": "publicKey"
           },
           {
+            "name": "addressDefaultProfiles",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
             "name": "owner",
             "type": "publicKey"
           },
@@ -1693,101 +1894,106 @@ export const IDL: AnchorSola = {
   "errors": [
     {
       "code": 6000,
+      "name": "ProfileIdNotNull",
+      "msg": "When mint default profiles, profile id must be null."
+    },
+    {
+      "code": 6001,
       "name": "NotFoundDefaultProfiles",
       "msg": "Not found default profiles in accounts."
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "FoundDefaultProfiles",
       "msg": "Found default profiles in accounts."
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "CannotReviewOwned",
       "msg": "You cannot create a review for an SOLA that you currently own or published"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "CuratorAlreadySet",
       "msg": "There is already a verified curator assigned"
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "CuratorAuthorityMismatch",
       "msg": "The expected curator authority did not match expected"
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "CuratorMismatch",
       "msg": "The provided curator account did not match the one assigned"
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "CuratorNotFound",
       "msg": "The provided metadata not found curators."
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "CuratorsIsSoMuch",
       "msg": "The profile curators is so much!"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "MetadataIsImmutable",
       "msg": "The metadata of the SOLA is marked as immutable"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "RatingOutOfBounds",
       "msg": "The rating for a review must be between 0 and 5"
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "SupplyReduction",
       "msg": "Updated supply is less than the original supply set on creation"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "SuspendedInstallation",
       "msg": "Attempting to install a currently suspended SOLA"
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "UnauthorizedInstall",
       "msg": "The access account provided is not associated with the wallet"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "UnknownCreator",
       "msg": "A provided creator was not found on the metadata account"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "UpdateAuthorityMismatch",
       "msg": "The signer did not match the update authority of the metadata account or the owner"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "UpdateReviewAuthorityMismatch",
       "msg": "The signing authority for the SOLA update did not match the review authority"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "UriExceedsMaxLength",
       "msg": "The metadata URI provided exceeds the maximum length"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "SOLANotDeletable",
       "msg": "The SOLA is not deletable because its either an app with installations or has reviews"
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "UnBurnable",
       "msg": "The SOLA is UnBurnable."
     }

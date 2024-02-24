@@ -41,6 +41,7 @@ pub struct SolaProfile {
     /// 初始化的metadata地址
     pub master_metadata: Pubkey,
     pub master_edition: Pubkey,
+    pub address_default_profiles: Option<Pubkey>,
     // TODO: 初始化的class计数器，默认为0
     // pub class_counter: u64,
     pub owner: Pubkey,

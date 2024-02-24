@@ -40,7 +40,7 @@ pub struct MintProfile<'info> {
         seeds = [
             "sola_default_profiles".as_bytes(),
             sola_profile_global.key().as_ref(),
-            publisher.key().as_ref()
+            to.key().as_ref()
         ],
         bump,
     )]
@@ -140,11 +140,14 @@ pub fn mint_profile_handler(
     params: MintProfileParams,
 ) -> Result<u64> {
     let accounts = ctx.accounts;
-    let profile_id = profile_id.unwrap_or(accounts.sola_profile_global.counter);
 
     if let Some(default_profile) = accounts.address_default_profiles.as_deref_mut() {
-        default_profile.profile_id = profile_id;
+        require!(profile_id.is_none(), SolaError::ProfileIdNotNull);
+
+        default_profile.profile_id = accounts.sola_profile_global.counter;
     }
+
+    let profile_id = profile_id.unwrap_or(accounts.sola_profile_global.counter);
 
     msg!(
         "befor mint counter:{:?}",
@@ -190,6 +193,10 @@ fn initialize(
         master_edition: accounts.master_edition.key(),
         profile_bump: [profile_bump],
         mint_bump: [mint_bump],
+        address_default_profiles: accounts
+            .address_default_profiles
+            .as_ref()
+            .map(|addr| addr.key()),
         profile_id: profile_id.to_be_bytes(),
     };
     let creators = Some(

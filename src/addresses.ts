@@ -18,8 +18,8 @@ export function deriveSolaProfileGlobalAddress(): [PublicKey, number] {
 export function deriveSolaCreatorAddress(creator: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync([Buffer.from("sola_profile_creator"), deriveSolaProfileGlobalAddress()[0].toBytes(), creator.toBytes()], PROGRAM_ID);
 }
-export function deriveSolaDefaultProfilesAddress(publisher: PublicKey): [PublicKey, number] {
-    return PublicKey.findProgramAddressSync([Buffer.from("sola_default_profiles"), deriveSolaProfileGlobalAddress()[0].toBytes(), publisher.toBytes()], PROGRAM_ID);
+export function deriveSolaDefaultProfilesAddress(to: PublicKey): [PublicKey, number] {
+    return PublicKey.findProgramAddressSync([Buffer.from("sola_default_profiles"), deriveSolaProfileGlobalAddress()[0].toBytes(), to.toBytes()], PROGRAM_ID);
 }
 export function getMasterMetadataAddress(masterMint: PublicKey): [PublicKey, number] {
     return PublicKey.findProgramAddressSync([Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBytes(), masterMint.toBytes()], TOKEN_METADATA_PROGRAM_ID);

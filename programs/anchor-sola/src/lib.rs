@@ -31,6 +31,11 @@ pub mod anchor_sola {
         Ok(profile_id)
     }
 
+    pub fn burn_profile(ctx: Context<BurnProfile>, profile_id: u64) -> Result<()> {
+        profile::burn_profile_handler(ctx, profile_id)?;
+        Ok(())
+    }
+
     pub fn set_profile_creator(ctx: Context<SetProfileCreator>, status: bool) -> Result<()> {
         profile::handle_set_profile_creator(ctx, status)?;
         Ok(())
