@@ -497,6 +497,78 @@ export type AnchorSola = {
       ]
     },
     {
+      "name": "setClassGeneric",
+      "accounts": [
+        {
+          "name": "tokenClass",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "masterMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solaProfile",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "defaultDispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "groupController",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "classGeneric",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "classId",
+          "type": "u64"
+        },
+        {
+          "name": "params",
+          "type": {
+            "defined": "SetClassGenericParams"
+          }
+        }
+      ]
+    },
+    {
       "name": "setTokenClassState",
       "accounts": [
         {
@@ -1114,6 +1186,25 @@ export type AnchorSola = {
       }
     },
     {
+      "name": "classGeneric",
+      "docs": [
+        "seeds: \"class_generic\" + class_id"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "isGenericBadgeClass",
+            "type": "bool"
+          },
+          {
+            "name": "isLineageBadgeClass",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
       "name": "solaProperty",
       "type": {
         "kind": "struct",
@@ -1234,6 +1325,22 @@ export type AnchorSola = {
           {
             "name": "controller",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SetClassGenericParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "isGenericBadgeClass",
+            "type": "bool"
+          },
+          {
+            "name": "isLineageBadgeClass",
+            "type": "bool"
           }
         ]
       }
@@ -1954,6 +2061,78 @@ export const IDL: AnchorSola = {
       ]
     },
     {
+      "name": "setClassGeneric",
+      "accounts": [
+        {
+          "name": "tokenClass",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "masterMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "solaProfile",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "defaultDispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "groupController",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "classGeneric",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "classId",
+          "type": "u64"
+        },
+        {
+          "name": "params",
+          "type": {
+            "defined": "SetClassGenericParams"
+          }
+        }
+      ]
+    },
+    {
       "name": "setTokenClassState",
       "accounts": [
         {
@@ -2571,6 +2750,25 @@ export const IDL: AnchorSola = {
       }
     },
     {
+      "name": "classGeneric",
+      "docs": [
+        "seeds: \"class_generic\" + class_id"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "isGenericBadgeClass",
+            "type": "bool"
+          },
+          {
+            "name": "isLineageBadgeClass",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
       "name": "solaProperty",
       "type": {
         "kind": "struct",
@@ -2691,6 +2889,22 @@ export const IDL: AnchorSola = {
           {
             "name": "controller",
             "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SetClassGenericParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "isGenericBadgeClass",
+            "type": "bool"
+          },
+          {
+            "name": "isLineageBadgeClass",
+            "type": "bool"
           }
         ]
       }

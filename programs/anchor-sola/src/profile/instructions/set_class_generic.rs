@@ -1,19 +1,27 @@
 use crate::{
-    profile::utils::{is_dispatcher, is_owner},
+    profile::utils::{is_dispatcher, is_group_manager, is_owner},
     state::SolaError,
-    Dispatcher, GroupController, SolaProfile,
+    ClassGeneric, Dispatcher, GroupController, SolaProfile, TokenClass,
 };
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
-#[instruction(controller_id: u64)]
-pub struct SetGroupController<'info> {
+#[instruction(class_id: u64)]
+pub struct SetClassGeneric<'info> {
+    #[account(
+        seeds = [
+            "token_class".as_bytes(),
+            &class_id.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub token_class: Account<'info, TokenClass>,
     /// CHECK:
     #[account(
         mut,
         seeds = [
             "mint".as_bytes(),
-            &controller_id.to_be_bytes()[..],
+            &token_class.controller.to_be_bytes()[..],
         ],
         bump
     )]
@@ -31,7 +39,7 @@ pub struct SetGroupController<'info> {
     #[account(
         seeds = [
             "dispatcher".as_bytes(),
-            &controller_id.to_be_bytes(),
+            &token_class.controller.to_be_bytes(),
         ],
         bump,
     )]
@@ -44,39 +52,45 @@ pub struct SetGroupController<'info> {
     )]
     pub default_dispatcher: Account<'info, Dispatcher>,
 
-    #[account(
-        init_if_needed,
-        payer = payer,
-        space = 8 + GroupController::INIT_SPACE,
+    #[account(       
         seeds = [
             "group_controller".as_bytes(),
-            &controller_id.to_be_bytes(),
-            controller.key().as_ref(),
+            authority.key().as_ref()
         ],
         bump,
     )]
-    pub group_controller: Account<'info, GroupController>,
+    group_controller: Account<'info, GroupController>,
+
+    #[account(
+        init_if_needed,
+        payer = payer,
+        space = 8 + ClassGeneric::INIT_SPACE,
+        seeds = [
+            "class_generic".as_bytes(),
+            &class_id.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub class_generic: Account<'info, ClassGeneric>,
     /// CHECK:
     #[account(mut)]
     pub payer: Signer<'info>,
     pub authority: Signer<'info>,
-    /// CHECK:
-    pub controller: UncheckedAccount<'info>,
+
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
-pub struct SetGroupControllerParams {
-    pub is_manager: bool,
-    pub is_issuer: bool,
-    pub is_member: bool,
+pub struct SetClassGenericParams {
+    pub is_generic_badge_class: bool,
+    pub is_lineage_badge_class: bool,
 }
 
-pub fn handle_set_group_controller(
-    ctx: Context<SetGroupController>,
-    _controller_id: u64,
-    params: SetGroupControllerParams,
+pub fn handle_set_class_generic(
+    ctx: Context<SetClassGeneric>,
+    _class_id: u64,
+    params: SetClassGenericParams,
 ) -> Result<()> {
     let authority = ctx.accounts.authority.key();
 
@@ -86,14 +100,14 @@ pub fn handle_set_group_controller(
                 &ctx.accounts.dispatcher,
                 &ctx.accounts.default_dispatcher,
                 authority
-            ),
+            )
+            || is_group_manager(&ctx.accounts.group_controller),
         SolaError::NoPermission
     );
 
-    *ctx.accounts.group_controller = GroupController {
-        is_manager: params.is_manager,
-        is_issuer: params.is_issuer,
-        is_member: params.is_member,
+    *ctx.accounts.class_generic = ClassGeneric {
+        is_generic_badge_class: params.is_generic_badge_class,
+        is_lineage_badge_class: params.is_lineage_badge_class,
     };
 
     Ok(())

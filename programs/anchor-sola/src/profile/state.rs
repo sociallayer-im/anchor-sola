@@ -116,3 +116,11 @@ pub struct TokenClassState {
 pub struct Dispatcher {
     pub dispatcher: Pubkey,
 }
+
+/// seeds: "class_generic" + class_id
+#[derive(InitSpace)]
+#[account]
+pub struct ClassGeneric {
+    pub is_generic_badge_class: bool,
+    pub is_lineage_badge_class: bool,
+}

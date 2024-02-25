@@ -1,4 +1,8 @@
-use crate::{state::SolaError, Dispatcher, SolaProfile, TokenClass, TokenClassState};
+use crate::{
+    profile::utils::{is_dispatcher, is_owner},
+    state::SolaError,
+    Dispatcher, SolaProfile, TokenClass, TokenClassState,
+};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -82,22 +86,16 @@ pub fn handle_set_token_class_state(
     params: SetTokenClassStateParams,
 ) -> Result<()> {
     let authority = ctx.accounts.authority.key();
-    // require(ownerOf(controllerId) == addr ||
-    // isDispatcher(controllerId, addr), "no permission");
-    let allowed = ctx.accounts.sola_profile.owner == authority
-        || (ctx.accounts.dispatcher.data_is_empty()
-            && ctx.accounts.default_dispatcher.dispatcher == authority)
-        || (ctx
-            .accounts
-            .dispatcher
-            .try_borrow_data()
-            .ok()
-            .as_ref()
-            .and_then(|data| Dispatcher::try_deserialize(&mut &data[..]).ok())
-            .filter(|dispatcher| authority == dispatcher.dispatcher)
-            .is_some());
 
-    require!(allowed, SolaError::NoPermission);
+    require!(
+        is_owner(&ctx.accounts.sola_profile, authority)
+            || is_dispatcher(
+                &ctx.accounts.dispatcher,
+                &ctx.accounts.default_dispatcher,
+                authority
+            ),
+        SolaError::NoPermission
+    );
 
     *ctx.accounts.token_class_state = TokenClassState {
         is_issuer: params.is_issuer,

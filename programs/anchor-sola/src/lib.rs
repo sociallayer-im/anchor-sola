@@ -70,6 +70,14 @@ pub mod anchor_sola {
         Ok(())
     }
 
+    pub fn set_class_generic(
+        ctx: Context<SetClassGeneric>,
+        class_id: u64,
+        params: SetClassGenericParams,
+    ) -> Result<()> {
+        profile::handle_set_class_generic(ctx, class_id, params)?;
+        Ok(())
+    }
     pub fn set_token_class_state(
         ctx: Context<SetTokenClassState>,
         class_id: u64,
