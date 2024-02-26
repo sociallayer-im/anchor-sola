@@ -170,17 +170,17 @@ pub struct MintBadge<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     pub publisher: Signer<'info>,
-    #[account(
-        init_if_needed,
-        payer = payer,
-        space = 8 + BadgeState::INIT_SPACE,
-        seeds = [
-            "proxy_owner".as_bytes(),
-            to.key().as_ref(),
-        ],
-        bump,
-    )]
-    pub proxy_owner: Account<'info, ProxyOwner>,
+    // #[account(
+    //     init_if_needed,
+    //     payer = payer,
+    //     space = 8 + BadgeState::INIT_SPACE,
+    //     seeds = [
+    //         "proxy_owner".as_bytes(),
+    //         to.key().as_ref(),
+    //     ],
+    //     bump,
+    // )]
+    // pub proxy_owner: Account<'info, ProxyOwner>,
     /// CHECK: token owner
     pub to: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
@@ -274,6 +274,10 @@ pub fn mint_badge_handler(
         )?;
     }
 
+    if registry.get_token_class_revocable() {
+        return Err(SolaError::NotSupport.into());
+    }
+
     initialize(accounts, params)?;
 
     mint(accounts)?;
@@ -357,7 +361,7 @@ fn mint(accounts: &mut MintBadge<'_>) -> Result<()> {
     let token_record = accounts.token_record.to_account_info();
     let badge_state = accounts.badge_state.to_account_info();
     let payer = accounts.payer.to_account_info();
-    let to = accounts.proxy_owner.to_account_info();
+    let to = accounts.to.to_account_info();
     let instructions = accounts.sysvar_instructions.to_account_info();
     let system = accounts.system_program.to_account_info();
     let spl = accounts.token_program.to_account_info();

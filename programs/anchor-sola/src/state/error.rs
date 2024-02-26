@@ -2,6 +2,8 @@ use anchor_lang::error_code;
 
 #[error_code]
 pub enum SolaError {
+    #[msg("not support.")]
+    NotSupport,
     #[msg("invalid token standard")]
     InvalidTokenStandard,
     #[msg("origins mismatch.")]
