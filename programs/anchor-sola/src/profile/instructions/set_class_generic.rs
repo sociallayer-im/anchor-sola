@@ -20,7 +20,7 @@ pub struct SetClassGeneric<'info> {
     #[account(
         mut,
         seeds = [
-            "mint".as_bytes(),
+            "mint_profile".as_bytes(),
             &token_class.controller.to_be_bytes()[..],
         ],
         bump

@@ -2,6 +2,10 @@ use anchor_lang::error_code;
 
 #[error_code]
 pub enum SolaError {
+    #[msg("invalid token standard")]
+    InvalidTokenStandard,
+    #[msg("origins mismatch.")]
+    OriginsMismatch,
     #[msg("no permission")]
     NoPermission,
     #[msg("When mint default profiles, profile id must be null.")]

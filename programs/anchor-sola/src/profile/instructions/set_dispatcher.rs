@@ -8,7 +8,7 @@ pub struct SetDispatcher<'info> {
     #[account(
         mut,
         seeds = [
-            "mint".as_bytes(),
+            "mint_profile".as_bytes(),
             &controller_id.to_be_bytes()[..],
         ],
         bump

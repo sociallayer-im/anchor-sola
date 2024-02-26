@@ -1,6 +1,6 @@
 mod instructions;
 mod state;
-mod utils;
+pub mod utils;
 
 pub use instructions::*;
 pub use state::*;

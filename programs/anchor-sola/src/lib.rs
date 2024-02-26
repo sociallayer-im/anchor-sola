@@ -1,10 +1,14 @@
+mod badge;
 mod instructions;
 mod profile;
 mod state;
+
 use anchor_lang::prelude::*;
 use instructions::*;
 use profile::*;
 use state::CreateSolaParams;
+
+use badge::instructions::*;
 
 declare_id!("13QsVLZkzf9gRiFbFrUK9xhLa6QukFEdLxJUfbuta33L");
 
@@ -12,6 +16,23 @@ declare_id!("13QsVLZkzf9gRiFbFrUK9xhLa6QukFEdLxJUfbuta33L");
 pub mod anchor_sola {
 
     use super::*;
+    pub fn initializee_badge_global(
+        ctx: Context<InitializeeBadgeGlobal>,
+        uri: String,
+    ) -> Result<()> {
+        handle_initializee_badge_global(ctx, uri)?;
+        Ok(())
+    }
+
+    pub fn mint_badge(
+        ctx: Context<MintBadge>,
+        class_id: u64,
+        params: MintBadgeParams,
+        origins: Vec<u64>,
+    ) -> Result<u64> {
+        let res = mint_badge_handler(ctx, class_id, params, origins)?;
+        Ok(res)
+    }
 
     pub fn initializee(
         ctx: Context<InitializeeProfileGlobal>,

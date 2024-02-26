@@ -1,7 +1,9 @@
 use crate::{
-    profile::state::SolaProfile,
+    badge::state::{BadgeGlobal, BadgeState, GenericOrigins, LineageOrigins, ProxyOwner},
+    profile::SolaProfile,
     state::{CreatorsParam, SolaError},
-    DefaultProfileId, IsProfileCreator, SolaProfileGlobal,
+    utils::create_non_transferable_mint,
+    Dispatcher, IRegistryRef, TokenClass, TOKEN_SCHEMA_MAX_LEN,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, metadata::Metadata, token_interface::*};
@@ -14,37 +16,16 @@ use mpl_token_metadata::{
 };
 
 #[derive(Accounts)]
-#[instruction(profile_id: Option<u64>)]
-pub struct MintProfile<'info> {
+#[instruction(class_id: u64,origins: Vec<u64>)]
+pub struct MintBadge<'info> {
     #[account(
         mut,
         seeds = [
-            "sola_profile_global".as_bytes()
+            "badge_global".as_bytes()
         ],
         bump,
     )]
-    pub sola_profile_global: Account<'info, SolaProfileGlobal>,
-    #[account(
-        seeds = [
-            "sola_profile_creator".as_bytes(),
-            sola_profile_global.key().as_ref(),
-            publisher.key().as_ref()
-        ],
-        bump,
-    )]
-    pub sola_creator: Account<'info, IsProfileCreator>,
-    #[account(
-        init,
-        space = 8 + DefaultProfileId::INIT_SPACE,
-        payer = payer,
-        seeds = [
-            "sola_default_profiles".as_bytes(),
-            sola_profile_global.key().as_ref(),
-            to.key().as_ref()
-        ],
-        bump,
-    )]
-    pub address_default_profiles: Option<Account<'info, DefaultProfileId>>,
+    pub badge_global: Account<'info, BadgeGlobal>,
     /// CHECK:
     #[account(mut)]
     pub master_token: UncheckedAccount<'info>,
@@ -52,8 +33,8 @@ pub struct MintProfile<'info> {
     #[account(
         mut,
         seeds = [
-            "mint_profile".as_bytes(),
-            &profile_id.unwrap_or(sola_profile_global.counter).to_be_bytes()[..],
+            "mint_badge".as_bytes(),
+            &badge_global.counter.to_be_bytes()[..],
         ],
         bump
     )]
@@ -101,21 +82,109 @@ pub struct MintProfile<'info> {
     #[account(
         init,
         payer = payer,
-        space = 8 + SolaProfile::INIT_SPACE,
+        space = 8 + BadgeState::INIT_SPACE,
         seeds = [
-            "sola_profile".as_bytes(),
+            "badge_state".as_bytes(),
             master_mint.key().as_ref(),
         ],
         bump,
     )]
+    pub badge_state: Account<'info, BadgeState>,
+
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + LineageOrigins::init_space(origins.len()),
+        seeds = [
+            "lineage_origins".as_bytes(),
+            master_mint.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub lineage_origins: Option<Account<'info, LineageOrigins>>,
+
+    #[account(
+        init,
+        payer = payer,
+        space = 8 + GenericOrigins::INIT_SPACE,
+        seeds = [
+            "generic_origins".as_bytes(),
+            master_mint.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub generic_origins: Option<Account<'info, GenericOrigins>>,
+
+    // register:
+    #[account(
+        seeds = [
+            "token_class".as_bytes(),
+            &class_id.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub token_class: Account<'info, TokenClass>,
+    /// CHECK:
+    #[account(
+        seeds = [
+            "mint_profile".as_bytes(),
+            &token_class.controller.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub class_mint: UncheckedAccount<'info>,
+    #[account(
+        seeds = [
+            "sola_profile".as_bytes(),
+            class_mint.key().as_ref(),
+        ],
+        bump,
+    )]
     pub sola_profile: Account<'info, SolaProfile>,
+    /// CHECK:
+    #[account(
+        seeds = [
+            "dispatcher".as_bytes(),
+            &token_class.controller.to_be_bytes()
+        ],
+        bump,
+    )]
+    pub dispatcher: UncheckedAccount<'info>,
+    #[account(
+        seeds = [
+            "default_dispatcher".as_bytes(),
+        ],
+        bump,
+    )]
+    pub default_dispatcher: Account<'info, Dispatcher>,
+    /// CHECK:
+    #[account(
+        seeds = [
+            "class_generic".as_bytes(),
+            &class_id.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub class_generic: UncheckedAccount<'info>,
+
     #[account(mut)]
     pub payer: Signer<'info>,
     pub publisher: Signer<'info>,
+    #[account(
+        init_if_needed,
+        payer = payer,
+        space = 8 + BadgeState::INIT_SPACE,
+        seeds = [
+            "proxy_owner".as_bytes(),
+            to.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub proxy_owner: Account<'info, ProxyOwner>,
     /// CHECK: token owner
     pub to: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub token_program: Program<'info, Token2022>,
     pub spl_ata_program: Program<'info, AssociatedToken>,
     pub metadata_program: Program<'info, Metadata>,
     /// CHECK:
@@ -124,7 +193,7 @@ pub struct MintProfile<'info> {
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
-pub struct MintProfileParams {
+pub struct MintBadgeParams {
     pub name: String,
     pub creators: Vec<CreatorsParam>,
     pub curator: Option<Pubkey>,
@@ -132,73 +201,89 @@ pub struct MintProfileParams {
     pub symbol: String,
     pub uri: String,
     pub is_mutable: bool,
+    pub weights: u64,
+    pub schema: String,
 }
 
-pub fn mint_profile_handler(
-    ctx: Context<MintProfile>,
-    profile_id: Option<u64>,
-    params: MintProfileParams,
+pub fn mint_badge_handler(
+    ctx: Context<MintBadge>,
+    class_id: u64,
+    params: MintBadgeParams,
+    origins: Vec<u64>,
 ) -> Result<u64> {
     let accounts = ctx.accounts;
 
-    if let Some(default_profile) = accounts.address_default_profiles.as_deref_mut() {
-        require!(profile_id.is_none(), SolaError::ProfileIdNotNull);
-
-        default_profile.profile_id = accounts.sola_profile_global.counter;
-    }
-
-    let profile_id = profile_id.unwrap_or(accounts.sola_profile_global.counter);
-
-    msg!(
-        "befor mint counter:{:?}",
-        accounts.sola_profile_global.counter
-    );
+    require_gt!(TOKEN_SCHEMA_MAX_LEN, params.schema.len());
 
     require!(
-        accounts.sola_creator.is_profile_creator,
-        SolaError::NotProfileCreator
+        !(accounts.lineage_origins.is_some() && accounts.generic_origins.is_some()),
+        SolaError::OriginsMismatch
     );
 
-    initialize(
-        accounts,
-        ctx.bumps.sola_profile,
-        ctx.bumps.master_mint,
-        profile_id,
-        params,
-    )?;
+    let registry = IRegistryRef {
+        token_class: &accounts.token_class,
+        master_mint: &accounts.class_mint,
+        sola_profile: &accounts.sola_profile,
+        dispatcher: &accounts.dispatcher,
+        default_dispatcher: &accounts.default_dispatcher,
+        class_generic: &accounts.class_generic,
+    };
+
+    if let Some(generic) = accounts.generic_origins.as_mut() {
+        require!(registry.is_generic_badge_class(), SolaError::NoPermission);
+        require_eq!(origins.len(), 1);
+        generic.origin = origins[0];
+    } else {
+        require!(
+            registry.is_token_class_owner(accounts.publisher.key()),
+            SolaError::NoPermission
+        );
+    }
+
+    if let Some(linege) = accounts.lineage_origins.as_mut() {
+        require!(registry.is_lineage_badge_class(), SolaError::NoPermission);
+        linege.origins = origins;
+    }
+
+    let badge_id = accounts.badge_global.counter;
+
+    *accounts.badge_state = BadgeState {
+        metatable: class_id,
+        weights: params.weights,
+        token_schema: params.schema.clone(),
+        master_mint: accounts.master_mint.key(),
+        master_metadata: accounts.master_metadata.key(),
+        master_edition: accounts.master_edition.key(),
+        owner: accounts.to.key(),
+        badge_id: badge_id.to_be_bytes(),
+        badge_bump: [ctx.bumps.badge_state],
+        mint_bump: [ctx.bumps.master_mint],
+    };
+
+    if !registry.get_token_class_transferable() {
+        create_non_transferable_mint(
+            &accounts.master_mint,
+            &accounts.master_metadata,
+            &accounts.badge_state,
+            &accounts.payer,
+            mpl_token_metadata::types::TokenStandard::ProgrammableNonFungible,
+            None,
+            &accounts.token_program,
+            &accounts.system_program,
+            &accounts.badge_state.as_seeds(),
+        )?;
+    }
+
+    initialize(accounts, params)?;
 
     mint(accounts)?;
 
-    accounts.sola_profile_global.counter += 1;
+    accounts.badge_global.counter += 1;
 
-    msg!(
-        "after mint counter:{:?}",
-        accounts.sola_profile_global.counter
-    );
-    Ok(profile_id)
+    Ok(badge_id)
 }
 
-fn initialize(
-    accounts: &mut MintProfile<'_>,
-    profile_bump: u8,
-    mint_bump: u8,
-    profile_id: u64,
-    params: MintProfileParams,
-) -> Result<()> {
-    let profile = &mut accounts.sola_profile;
-    **profile = SolaProfile {
-        owner: accounts.to.key(),
-        master_metadata: accounts.master_metadata.key(),
-        master_mint: accounts.master_mint.key(),
-        master_edition: accounts.master_edition.key(),
-        profile_bump: [profile_bump],
-        mint_bump: [mint_bump],
-        address_default_profiles: accounts
-            .address_default_profiles
-            .as_ref()
-            .map(|addr| addr.key()),
-        profile_id: profile_id.to_be_bytes(),
-    };
+fn initialize(accounts: &mut MintBadge<'_>, params: MintBadgeParams) -> Result<()> {
     let creators = Some(
         params
             .creators
@@ -214,7 +299,7 @@ fn initialize(
     let master_metadata = accounts.master_metadata.to_account_info();
     let master_edition = accounts.master_edition.to_account_info();
     let master_mint = accounts.master_mint.to_account_info();
-    let sola_profile = profile.to_account_info();
+    let badge_state = accounts.badge_state.to_account_info();
     let payer = accounts.payer.to_account_info();
     let instructions = accounts.sysvar_instructions.to_account_info();
     let system = accounts.system_program.to_account_info();
@@ -227,10 +312,10 @@ fn initialize(
             mint: (&master_mint, true),
             // 这个账户允许mint
             // 在这里我们设置为profile拥有权限，后续我们自定义自己的mint方法，由该程序去间接调用mpl 的 mint接口
-            authority: &sola_profile,
+            authority: &badge_state,
             payer: &payer,
             // 在nft中，update authority 必须和authority 是同一个人
-            update_authority: (&sola_profile, true),
+            update_authority: (&badge_state, true),
             system_program: &system,
             sysvar_instructions: &instructions,
             spl_token_program: Some(&spl),
@@ -256,13 +341,13 @@ fn initialize(
             },
         },
     );
-    let mint_info_seeds = profile.mint_seeds();
-    let sola_profile_seeds = profile.as_seeds();
-    create_cpi.invoke_signed(&[&mint_info_seeds[..], &sola_profile_seeds[..]])?;
+    let mint_seeds = accounts.badge_state.mint_seeds();
+    let badge_seeds = accounts.badge_state.as_seeds();
+    create_cpi.invoke_signed(&[&mint_seeds[..], &badge_seeds[..]])?;
     Ok(())
 }
 
-fn mint(accounts: &mut MintProfile<'_>) -> Result<()> {
+fn mint(accounts: &mut MintBadge<'_>) -> Result<()> {
     // Initialize
     let metadata_program = accounts.metadata_program.to_account_info();
     let master_metadata = accounts.master_metadata.to_account_info();
@@ -270,9 +355,9 @@ fn mint(accounts: &mut MintProfile<'_>) -> Result<()> {
     let master_mint = accounts.master_mint.to_account_info();
     let master_token = accounts.master_token.to_account_info();
     let token_record = accounts.token_record.to_account_info();
-    let sola_profile = accounts.sola_profile.to_account_info();
+    let badge_state = accounts.badge_state.to_account_info();
     let payer = accounts.payer.to_account_info();
-    let to = accounts.to.to_account_info();
+    let to = accounts.proxy_owner.to_account_info();
     let instructions = accounts.sysvar_instructions.to_account_info();
     let system = accounts.system_program.to_account_info();
     let spl = accounts.token_program.to_account_info();
@@ -285,7 +370,7 @@ fn mint(accounts: &mut MintProfile<'_>) -> Result<()> {
             mint: &master_mint,
             // 这个账户允许mint
             // 在这里我们设置为profile拥有权限，后续我们自定义自己的mint方法，由该程序去间接调用mpl 的 mint接口
-            authority: &sola_profile,
+            authority: &badge_state,
             payer: &payer,
             // 在nft中，update authority 必须和authority 是同一个人
             system_program: &system,
@@ -309,9 +394,9 @@ fn mint(accounts: &mut MintProfile<'_>) -> Result<()> {
         },
     );
 
-    let sola_profile_seeds = accounts.sola_profile.as_seeds();
+    let badge_seeds = accounts.badge_state.as_seeds();
 
-    create_cpi.invoke_signed(&[&sola_profile_seeds[..]])?;
+    create_cpi.invoke_signed(&[&badge_seeds[..]])?;
 
     Ok(())
 }

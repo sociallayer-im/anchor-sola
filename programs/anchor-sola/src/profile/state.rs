@@ -1,6 +1,8 @@
 use anchor_lang::{account, prelude::*, solana_program::pubkey::Pubkey};
 use mpl_token_metadata::MAX_URI_LENGTH;
 
+use super::utils::{is_dispatcher, RefAccount};
+
 #[derive(InitSpace)]
 #[account]
 pub struct SolaProfileGlobal {
@@ -55,7 +57,11 @@ impl SolaProfile {
     }
 
     pub fn mint_seeds<'s>(&'s self) -> [&[u8]; 3] {
-        ["mint".as_bytes(), &self.profile_id[..], &self.mint_bump[..]]
+        [
+            "mint_profile".as_bytes(),
+            &self.profile_id[..],
+            &self.mint_bump[..],
+        ]
     }
 }
 
@@ -123,4 +129,113 @@ pub struct Dispatcher {
 pub struct ClassGeneric {
     pub is_generic_badge_class: bool,
     pub is_lineage_badge_class: bool,
+}
+
+/**
+```rust
+#[derive(Accounts)]
+#[instruction(class_id: u64)]
+pub struct IRegistry<'info> {
+    #[account(
+        seeds = [
+            "token_class".as_bytes(),
+            &class_id.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub token_class: Account<'info, TokenClass>,
+    /// CHECK:
+    #[account(
+        seeds = [
+            "mint".as_bytes(),
+            &token_class.controller.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub master_mint: UncheckedAccount<'info>,
+    #[account(
+        seeds = [
+            "sola_profile".as_bytes(),
+            master_mint.key().as_ref(),
+        ],
+        bump,
+    )]
+    pub sola_profile: Account<'info, SolaProfile>,
+    /// CHECK:
+    #[account(
+        seeds = [
+            "dispatcher".as_bytes(),
+            &token_class.controller.to_be_bytes()
+        ],
+        bump,
+    )]
+    pub dispatcher: UncheckedAccount<'info>,
+    #[account(
+        seeds = [
+            "default_dispatcher".as_bytes(),
+        ],
+        bump,
+    )]
+    pub default_dispatcher: Account<'info, Dispatcher>,
+    /// CHECK:
+    #[account(
+        seeds = [
+            "class_generic".as_bytes(),
+            &class_id.to_be_bytes(),
+        ],
+        bump,
+    )]
+    pub class_generic: UncheckedAccount<'info>,
+}
+```
+*/
+pub struct IRegistryRef<'info: 'ref_info, 'ref_info> {
+    /// seeds: "token_class" + &class_id.to_be_bytes()
+    pub token_class: &'ref_info Account<'info, TokenClass>,
+    /// CHECK:
+    /// seeds: "mint" + &token_class.controller.to_be_bytes()
+    pub master_mint: &'ref_info UncheckedAccount<'info>,
+    /// seeds: "sola_profile" +  master_mint.key().as_ref()
+    pub sola_profile: &'ref_info Account<'info, SolaProfile>,
+    /// CHECK:
+    /// seeds: "dispatcher" + &token_class.controller.to_be_bytes()
+    pub dispatcher: &'ref_info UncheckedAccount<'info>,
+    /// seeds: "default_dispatcher"
+    pub default_dispatcher: &'ref_info Account<'info, Dispatcher>,
+    /// CHECK:
+    /// seeds: "class_generic" + class_id
+    pub class_generic: &'ref_info UncheckedAccount<'info>,
+}
+
+impl<'info: 'ref_info, 'ref_info> IRegistryRef<'info, 'ref_info> {
+    pub fn is_token_class_owner(&self, addr: Pubkey) -> bool {
+        self.sola_profile.owner == addr
+            || is_dispatcher(&self.dispatcher, &self.default_dispatcher, addr)
+    }
+
+    pub fn get_token_class_transferable(&self) -> bool {
+        self.token_class.record.transferable
+    }
+
+    pub fn get_token_class_revocable(&self) -> bool {
+        self.token_class.record.revocable
+    }
+
+    pub fn get_class_schema(&self) -> String {
+        self.token_class.schema.clone()
+    }
+
+    pub fn is_generic_badge_class(&self) -> bool {
+        let class_generic = RefAccount::<ClassGeneric>::new(&self.class_generic);
+        class_generic
+            .map(|inner| inner.is_generic_badge_class)
+            .unwrap_or(false)
+    }
+
+    pub fn is_lineage_badge_class(&self) -> bool {
+        let class_generic = RefAccount::<ClassGeneric>::new(&self.class_generic);
+        class_generic
+            .map(|inner| inner.is_lineage_badge_class)
+            .unwrap_or(false)
+    }
 }

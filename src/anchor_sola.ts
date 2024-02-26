@@ -3,6 +3,193 @@ export type AnchorSola = {
   "name": "anchor_sola",
   "instructions": [
     {
+      "name": "initializeeBadgeGlobal",
+      "accounts": [
+        {
+          "name": "badgeGlobal",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "mintBadge",
+      "accounts": [
+        {
+          "name": "badgeGlobal",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterEdition",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "badgeState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lineageOrigins",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "genericOrigins",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenClass",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "classMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "solaProfile",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "defaultDispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "classGeneric",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "publisher",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "proxyOwner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "splAtaProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "classId",
+          "type": "u64"
+        },
+        {
+          "name": "params",
+          "type": {
+            "defined": "MintBadgeParams"
+          }
+        },
+        {
+          "name": "origins",
+          "type": {
+            "vec": "u64"
+          }
+        }
+      ],
+      "returns": "u64"
+    },
+    {
       "name": "initializee",
       "accounts": [
         {
@@ -957,6 +1144,142 @@ export type AnchorSola = {
   ],
   "accounts": [
     {
+      "name": "badgeGlobal",
+      "docs": [
+        "seeds: \"badge_global\""
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "baseUri",
+            "type": "string"
+          },
+          {
+            "name": "counter",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "badgeState",
+      "docs": [
+        "seeds: \"badge_state\" + master_mint"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "badgeId",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "metatable",
+            "type": "u64"
+          },
+          {
+            "name": "weights",
+            "type": "u64"
+          },
+          {
+            "name": "tokenSchema",
+            "type": "string"
+          },
+          {
+            "name": "masterMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "masterMetadata",
+            "type": "publicKey"
+          },
+          {
+            "name": "masterEdition",
+            "type": "publicKey"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "badgeBump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          },
+          {
+            "name": "mintBump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "lineageOrigins",
+      "docs": [
+        "seeds: \"lineage_origins\" + master_mint"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "origins",
+            "type": {
+              "vec": "u64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "genericOrigins",
+      "docs": [
+        "seeds: \"generic_origins\" + token_id"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "origin",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "proxyOwner",
+      "docs": [
+        "seeds: \"proxy_owner\" + owner"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
       "name": "solaProfileGlobal",
       "type": {
         "kind": "struct",
@@ -1256,6 +1579,56 @@ export type AnchorSola = {
   ],
   "types": [
     {
+      "name": "MintBadgeParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "creators",
+            "type": {
+              "vec": {
+                "defined": "CreatorsParam"
+              }
+            }
+          },
+          {
+            "name": "curator",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "sellerFeeBasisPoints",
+            "type": "u16"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "isMutable",
+            "type": "bool"
+          },
+          {
+            "name": "weights",
+            "type": "u64"
+          },
+          {
+            "name": "schema",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "MintProfileParams",
       "type": {
         "kind": "struct",
@@ -1451,111 +1824,121 @@ export type AnchorSola = {
   "errors": [
     {
       "code": 6000,
+      "name": "InvalidTokenStandard",
+      "msg": "invalid token standard"
+    },
+    {
+      "code": 6001,
+      "name": "OriginsMismatch",
+      "msg": "origins mismatch."
+    },
+    {
+      "code": 6002,
       "name": "NoPermission",
       "msg": "no permission"
     },
     {
-      "code": 6001,
+      "code": 6003,
       "name": "ProfileIdNotNull",
       "msg": "When mint default profiles, profile id must be null."
     },
     {
-      "code": 6002,
+      "code": 6004,
       "name": "NotFoundDefaultProfiles",
       "msg": "Not found default profiles in accounts."
     },
     {
-      "code": 6003,
+      "code": 6005,
       "name": "FoundDefaultProfiles",
       "msg": "Found default profiles in accounts."
     },
     {
-      "code": 6004,
+      "code": 6006,
       "name": "CannotReviewOwned",
       "msg": "You cannot create a review for an SOLA that you currently own or published"
     },
     {
-      "code": 6005,
+      "code": 6007,
       "name": "CuratorAlreadySet",
       "msg": "There is already a verified curator assigned"
     },
     {
-      "code": 6006,
+      "code": 6008,
       "name": "CuratorAuthorityMismatch",
       "msg": "The expected curator authority did not match expected"
     },
     {
-      "code": 6007,
+      "code": 6009,
       "name": "CuratorMismatch",
       "msg": "The provided curator account did not match the one assigned"
     },
     {
-      "code": 6008,
+      "code": 6010,
       "name": "CuratorNotFound",
       "msg": "The provided metadata not found curators."
     },
     {
-      "code": 6009,
+      "code": 6011,
       "name": "CuratorsIsSoMuch",
       "msg": "The profile curators is so much!"
     },
     {
-      "code": 6010,
+      "code": 6012,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
     },
     {
-      "code": 6011,
+      "code": 6013,
       "name": "MetadataIsImmutable",
       "msg": "The metadata of the SOLA is marked as immutable"
     },
     {
-      "code": 6012,
+      "code": 6014,
       "name": "RatingOutOfBounds",
       "msg": "The rating for a review must be between 0 and 5"
     },
     {
-      "code": 6013,
+      "code": 6015,
       "name": "SupplyReduction",
       "msg": "Updated supply is less than the original supply set on creation"
     },
     {
-      "code": 6014,
+      "code": 6016,
       "name": "SuspendedInstallation",
       "msg": "Attempting to install a currently suspended SOLA"
     },
     {
-      "code": 6015,
+      "code": 6017,
       "name": "UnauthorizedInstall",
       "msg": "The access account provided is not associated with the wallet"
     },
     {
-      "code": 6016,
+      "code": 6018,
       "name": "UnknownCreator",
       "msg": "A provided creator was not found on the metadata account"
     },
     {
-      "code": 6017,
+      "code": 6019,
       "name": "UpdateAuthorityMismatch",
       "msg": "The signer did not match the update authority of the metadata account or the owner"
     },
     {
-      "code": 6018,
+      "code": 6020,
       "name": "UpdateReviewAuthorityMismatch",
       "msg": "The signing authority for the SOLA update did not match the review authority"
     },
     {
-      "code": 6019,
+      "code": 6021,
       "name": "UriExceedsMaxLength",
       "msg": "The metadata URI provided exceeds the maximum length"
     },
     {
-      "code": 6020,
+      "code": 6022,
       "name": "SOLANotDeletable",
       "msg": "The SOLA is not deletable because its either an app with installations or has reviews"
     },
     {
-      "code": 6021,
+      "code": 6023,
       "name": "UnBurnable",
       "msg": "The SOLA is UnBurnable."
     }
@@ -1567,6 +1950,193 @@ export const IDL: AnchorSola = {
   "name": "anchor_sola",
   "instructions": [
     {
+      "name": "initializeeBadgeGlobal",
+      "accounts": [
+        {
+          "name": "badgeGlobal",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "owner",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "uri",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "mintBadge",
+      "accounts": [
+        {
+          "name": "badgeGlobal",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterMetadata",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "masterEdition",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "tokenRecord",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "badgeState",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lineageOrigins",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "genericOrigins",
+          "isMut": true,
+          "isSigner": false,
+          "isOptional": true
+        },
+        {
+          "name": "tokenClass",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "classMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "solaProfile",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "defaultDispatcher",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "classGeneric",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "payer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "publisher",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "proxyOwner",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "to",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "splAtaProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "metadataProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "sysvarInstructions",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "classId",
+          "type": "u64"
+        },
+        {
+          "name": "params",
+          "type": {
+            "defined": "MintBadgeParams"
+          }
+        },
+        {
+          "name": "origins",
+          "type": {
+            "vec": "u64"
+          }
+        }
+      ],
+      "returns": "u64"
+    },
+    {
       "name": "initializee",
       "accounts": [
         {
@@ -2521,6 +3091,142 @@ export const IDL: AnchorSola = {
   ],
   "accounts": [
     {
+      "name": "badgeGlobal",
+      "docs": [
+        "seeds: \"badge_global\""
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "baseUri",
+            "type": "string"
+          },
+          {
+            "name": "counter",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "badgeState",
+      "docs": [
+        "seeds: \"badge_state\" + master_mint"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "badgeId",
+            "type": {
+              "array": [
+                "u8",
+                8
+              ]
+            }
+          },
+          {
+            "name": "metatable",
+            "type": "u64"
+          },
+          {
+            "name": "weights",
+            "type": "u64"
+          },
+          {
+            "name": "tokenSchema",
+            "type": "string"
+          },
+          {
+            "name": "masterMint",
+            "type": "publicKey"
+          },
+          {
+            "name": "masterMetadata",
+            "type": "publicKey"
+          },
+          {
+            "name": "masterEdition",
+            "type": "publicKey"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "badgeBump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          },
+          {
+            "name": "mintBump",
+            "type": {
+              "array": [
+                "u8",
+                1
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "lineageOrigins",
+      "docs": [
+        "seeds: \"lineage_origins\" + master_mint"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "origins",
+            "type": {
+              "vec": "u64"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "name": "genericOrigins",
+      "docs": [
+        "seeds: \"generic_origins\" + token_id"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "origin",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "proxyOwner",
+      "docs": [
+        "seeds: \"proxy_owner\" + owner"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "owner",
+            "type": "publicKey"
+          }
+        ]
+      }
+    },
+    {
       "name": "solaProfileGlobal",
       "type": {
         "kind": "struct",
@@ -2820,6 +3526,56 @@ export const IDL: AnchorSola = {
   ],
   "types": [
     {
+      "name": "MintBadgeParams",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "creators",
+            "type": {
+              "vec": {
+                "defined": "CreatorsParam"
+              }
+            }
+          },
+          {
+            "name": "curator",
+            "type": {
+              "option": "publicKey"
+            }
+          },
+          {
+            "name": "sellerFeeBasisPoints",
+            "type": "u16"
+          },
+          {
+            "name": "symbol",
+            "type": "string"
+          },
+          {
+            "name": "uri",
+            "type": "string"
+          },
+          {
+            "name": "isMutable",
+            "type": "bool"
+          },
+          {
+            "name": "weights",
+            "type": "u64"
+          },
+          {
+            "name": "schema",
+            "type": "string"
+          }
+        ]
+      }
+    },
+    {
       "name": "MintProfileParams",
       "type": {
         "kind": "struct",
@@ -3015,111 +3771,121 @@ export const IDL: AnchorSola = {
   "errors": [
     {
       "code": 6000,
+      "name": "InvalidTokenStandard",
+      "msg": "invalid token standard"
+    },
+    {
+      "code": 6001,
+      "name": "OriginsMismatch",
+      "msg": "origins mismatch."
+    },
+    {
+      "code": 6002,
       "name": "NoPermission",
       "msg": "no permission"
     },
     {
-      "code": 6001,
+      "code": 6003,
       "name": "ProfileIdNotNull",
       "msg": "When mint default profiles, profile id must be null."
     },
     {
-      "code": 6002,
+      "code": 6004,
       "name": "NotFoundDefaultProfiles",
       "msg": "Not found default profiles in accounts."
     },
     {
-      "code": 6003,
+      "code": 6005,
       "name": "FoundDefaultProfiles",
       "msg": "Found default profiles in accounts."
     },
     {
-      "code": 6004,
+      "code": 6006,
       "name": "CannotReviewOwned",
       "msg": "You cannot create a review for an SOLA that you currently own or published"
     },
     {
-      "code": 6005,
+      "code": 6007,
       "name": "CuratorAlreadySet",
       "msg": "There is already a verified curator assigned"
     },
     {
-      "code": 6006,
+      "code": 6008,
       "name": "CuratorAuthorityMismatch",
       "msg": "The expected curator authority did not match expected"
     },
     {
-      "code": 6007,
+      "code": 6009,
       "name": "CuratorMismatch",
       "msg": "The provided curator account did not match the one assigned"
     },
     {
-      "code": 6008,
+      "code": 6010,
       "name": "CuratorNotFound",
       "msg": "The provided metadata not found curators."
     },
     {
-      "code": 6009,
+      "code": 6011,
       "name": "CuratorsIsSoMuch",
       "msg": "The profile curators is so much!"
     },
     {
-      "code": 6010,
+      "code": 6012,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
     },
     {
-      "code": 6011,
+      "code": 6013,
       "name": "MetadataIsImmutable",
       "msg": "The metadata of the SOLA is marked as immutable"
     },
     {
-      "code": 6012,
+      "code": 6014,
       "name": "RatingOutOfBounds",
       "msg": "The rating for a review must be between 0 and 5"
     },
     {
-      "code": 6013,
+      "code": 6015,
       "name": "SupplyReduction",
       "msg": "Updated supply is less than the original supply set on creation"
     },
     {
-      "code": 6014,
+      "code": 6016,
       "name": "SuspendedInstallation",
       "msg": "Attempting to install a currently suspended SOLA"
     },
     {
-      "code": 6015,
+      "code": 6017,
       "name": "UnauthorizedInstall",
       "msg": "The access account provided is not associated with the wallet"
     },
     {
-      "code": 6016,
+      "code": 6018,
       "name": "UnknownCreator",
       "msg": "A provided creator was not found on the metadata account"
     },
     {
-      "code": 6017,
+      "code": 6019,
       "name": "UpdateAuthorityMismatch",
       "msg": "The signer did not match the update authority of the metadata account or the owner"
     },
     {
-      "code": 6018,
+      "code": 6020,
       "name": "UpdateReviewAuthorityMismatch",
       "msg": "The signing authority for the SOLA update did not match the review authority"
     },
     {
-      "code": 6019,
+      "code": 6021,
       "name": "UriExceedsMaxLength",
       "msg": "The metadata URI provided exceeds the maximum length"
     },
     {
-      "code": 6020,
+      "code": 6022,
       "name": "SOLANotDeletable",
       "msg": "The SOLA is not deletable because its either an app with installations or has reviews"
     },
     {
-      "code": 6021,
+      "code": 6023,
       "name": "UnBurnable",
       "msg": "The SOLA is UnBurnable."
     }

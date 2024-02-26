@@ -32,7 +32,7 @@ pub struct BurnProfile<'info> {
     #[account(
         mut,
         seeds = [
-            "mint".as_bytes(),
+            "mint_profile".as_bytes(),
             &profile_id.to_be_bytes()[..],
         ],
         bump
