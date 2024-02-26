@@ -129,11 +129,6 @@ export type AnchorSola = {
           "isSigner": true
         },
         {
-          "name": "proxyOwner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "to",
           "isMut": false,
           "isSigner": false
@@ -1824,121 +1819,126 @@ export type AnchorSola = {
   "errors": [
     {
       "code": 6000,
+      "name": "NotSupport",
+      "msg": "not support."
+    },
+    {
+      "code": 6001,
       "name": "InvalidTokenStandard",
       "msg": "invalid token standard"
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "OriginsMismatch",
       "msg": "origins mismatch."
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "NoPermission",
       "msg": "no permission"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "ProfileIdNotNull",
       "msg": "When mint default profiles, profile id must be null."
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "NotFoundDefaultProfiles",
       "msg": "Not found default profiles in accounts."
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "FoundDefaultProfiles",
       "msg": "Found default profiles in accounts."
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "CannotReviewOwned",
       "msg": "You cannot create a review for an SOLA that you currently own or published"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "CuratorAlreadySet",
       "msg": "There is already a verified curator assigned"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "CuratorAuthorityMismatch",
       "msg": "The expected curator authority did not match expected"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "CuratorMismatch",
       "msg": "The provided curator account did not match the one assigned"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "CuratorNotFound",
       "msg": "The provided metadata not found curators."
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "CuratorsIsSoMuch",
       "msg": "The profile curators is so much!"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "MetadataIsImmutable",
       "msg": "The metadata of the SOLA is marked as immutable"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "RatingOutOfBounds",
       "msg": "The rating for a review must be between 0 and 5"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "SupplyReduction",
       "msg": "Updated supply is less than the original supply set on creation"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "SuspendedInstallation",
       "msg": "Attempting to install a currently suspended SOLA"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "UnauthorizedInstall",
       "msg": "The access account provided is not associated with the wallet"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "UnknownCreator",
       "msg": "A provided creator was not found on the metadata account"
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "UpdateAuthorityMismatch",
       "msg": "The signer did not match the update authority of the metadata account or the owner"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "UpdateReviewAuthorityMismatch",
       "msg": "The signing authority for the SOLA update did not match the review authority"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "UriExceedsMaxLength",
       "msg": "The metadata URI provided exceeds the maximum length"
     },
     {
-      "code": 6022,
+      "code": 6023,
       "name": "SOLANotDeletable",
       "msg": "The SOLA is not deletable because its either an app with installations or has reviews"
     },
     {
-      "code": 6023,
+      "code": 6024,
       "name": "UnBurnable",
       "msg": "The SOLA is UnBurnable."
     }
@@ -2076,11 +2076,6 @@ export const IDL: AnchorSola = {
           "isSigner": true
         },
         {
-          "name": "proxyOwner",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "to",
           "isMut": false,
           "isSigner": false
@@ -3771,121 +3766,126 @@ export const IDL: AnchorSola = {
   "errors": [
     {
       "code": 6000,
+      "name": "NotSupport",
+      "msg": "not support."
+    },
+    {
+      "code": 6001,
       "name": "InvalidTokenStandard",
       "msg": "invalid token standard"
     },
     {
-      "code": 6001,
+      "code": 6002,
       "name": "OriginsMismatch",
       "msg": "origins mismatch."
     },
     {
-      "code": 6002,
+      "code": 6003,
       "name": "NoPermission",
       "msg": "no permission"
     },
     {
-      "code": 6003,
+      "code": 6004,
       "name": "ProfileIdNotNull",
       "msg": "When mint default profiles, profile id must be null."
     },
     {
-      "code": 6004,
+      "code": 6005,
       "name": "NotFoundDefaultProfiles",
       "msg": "Not found default profiles in accounts."
     },
     {
-      "code": 6005,
+      "code": 6006,
       "name": "FoundDefaultProfiles",
       "msg": "Found default profiles in accounts."
     },
     {
-      "code": 6006,
+      "code": 6007,
       "name": "CannotReviewOwned",
       "msg": "You cannot create a review for an SOLA that you currently own or published"
     },
     {
-      "code": 6007,
+      "code": 6008,
       "name": "CuratorAlreadySet",
       "msg": "There is already a verified curator assigned"
     },
     {
-      "code": 6008,
+      "code": 6009,
       "name": "CuratorAuthorityMismatch",
       "msg": "The expected curator authority did not match expected"
     },
     {
-      "code": 6009,
+      "code": 6010,
       "name": "CuratorMismatch",
       "msg": "The provided curator account did not match the one assigned"
     },
     {
-      "code": 6010,
+      "code": 6011,
       "name": "CuratorNotFound",
       "msg": "The provided metadata not found curators."
     },
     {
-      "code": 6011,
+      "code": 6012,
       "name": "CuratorsIsSoMuch",
       "msg": "The profile curators is so much!"
     },
     {
-      "code": 6012,
+      "code": 6013,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
     },
     {
-      "code": 6013,
+      "code": 6014,
       "name": "MetadataIsImmutable",
       "msg": "The metadata of the SOLA is marked as immutable"
     },
     {
-      "code": 6014,
+      "code": 6015,
       "name": "RatingOutOfBounds",
       "msg": "The rating for a review must be between 0 and 5"
     },
     {
-      "code": 6015,
+      "code": 6016,
       "name": "SupplyReduction",
       "msg": "Updated supply is less than the original supply set on creation"
     },
     {
-      "code": 6016,
+      "code": 6017,
       "name": "SuspendedInstallation",
       "msg": "Attempting to install a currently suspended SOLA"
     },
     {
-      "code": 6017,
+      "code": 6018,
       "name": "UnauthorizedInstall",
       "msg": "The access account provided is not associated with the wallet"
     },
     {
-      "code": 6018,
+      "code": 6019,
       "name": "UnknownCreator",
       "msg": "A provided creator was not found on the metadata account"
     },
     {
-      "code": 6019,
+      "code": 6020,
       "name": "UpdateAuthorityMismatch",
       "msg": "The signer did not match the update authority of the metadata account or the owner"
     },
     {
-      "code": 6020,
+      "code": 6021,
       "name": "UpdateReviewAuthorityMismatch",
       "msg": "The signing authority for the SOLA update did not match the review authority"
     },
     {
-      "code": 6021,
+      "code": 6022,
       "name": "UriExceedsMaxLength",
       "msg": "The metadata URI provided exceeds the maximum length"
     },
     {
-      "code": 6022,
+      "code": 6023,
       "name": "SOLANotDeletable",
       "msg": "The SOLA is not deletable because its either an app with installations or has reviews"
     },
     {
-      "code": 6023,
+      "code": 6024,
       "name": "UnBurnable",
       "msg": "The SOLA is UnBurnable."
     }

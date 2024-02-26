@@ -1,5 +1,5 @@
 use crate::{
-    badge::state::{BadgeGlobal, BadgeState, GenericOrigins, LineageOrigins, ProxyOwner},
+    badge::state::{BadgeGlobal, BadgeState, GenericOrigins, LineageOrigins},
     profile::SolaProfile,
     state::{CreatorsParam, SolaError},
     utils::create_non_transferable_mint,
