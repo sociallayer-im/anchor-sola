@@ -17,7 +17,6 @@ pub struct SetProfileCreator<'info> {
         space = 8 + IsProfileCreator::INIT_SPACE,
         seeds = [
             "sola_profile_creator".as_bytes(),
-            sola_profile_global.key().as_ref(),
             creator.key().as_ref()
         ],
         bump,

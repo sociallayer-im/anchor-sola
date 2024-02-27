@@ -4,22 +4,32 @@ use anchor_lang::{
     prelude::*,
     solana_program::{program::invoke, system_program},
 };
-use anchor_spl::token_2022::{
-    initialize_mint_close_authority,
-    spl_token_2022::{
-        self,
-        extension::{metadata_pointer, ExtensionType},
-        native_mint::DECIMALS,
-        state::Mint,
+use anchor_spl::{
+    token_2022::{
+        initialize_mint_close_authority,
+        spl_token_2022::{
+            self,
+            extension::{metadata_pointer, ExtensionType},
+            native_mint::DECIMALS,
+            state::Mint,
+        },
+        Token2022,
     },
-    Token2022,
+    token_interface::TokenAccount,
 };
 use mpl_token_metadata::types::TokenStandard;
 
-use crate::{state::SolaError, Dispatcher, GroupController, SolaProfile};
+use crate::{state::SolaError, Dispatcher, GroupController};
 
-pub fn is_owner(sola_profile: &Account<'_, SolaProfile>, authority: Pubkey) -> bool {
-    sola_profile.owner == authority
+pub fn is_owner(
+    master_token: Option<&UncheckedAccount<'_>>,
+    authority: Pubkey,
+    master_mint: &AccountInfo<'_>,
+) -> bool {
+    master_token
+        .and_then(|ua| RefAccount::<'_, '_, TokenAccount>::without_owner(ua.as_ref()))
+        .filter(|token| token.owner == authority && token.mint == master_mint.key())
+        .is_some()
 }
 
 pub fn is_dispatcher<'info: 'ref_info, 'ref_info>(
@@ -54,6 +64,22 @@ impl<'info: 'ref_info, 'ref_info, T: AccountSerialize + AccountDeserialize + Own
         if info.owner != &T::owner() {
             return None;
         }
+        let mut data: &[u8] = &info.try_borrow_data().ok()?;
+        Some(RefAccount {
+            info,
+            account: T::try_deserialize(&mut data).ok()?,
+        })
+    }
+}
+
+impl<'info: 'ref_info, 'ref_info, T: AccountSerialize + AccountDeserialize + Clone>
+    RefAccount<'info, 'ref_info, T>
+{
+    pub fn without_owner(info: &'ref_info AccountInfo<'info>) -> Option<Self> {
+        if info.owner == &system_program::ID && info.lamports() == 0 {
+            return None;
+        }
+
         let mut data: &[u8] = &info.try_borrow_data().ok()?;
         Some(RefAccount {
             info,

@@ -1,6 +1,5 @@
 use crate::{
     badge::state::{BadgeGlobal, BadgeState, GenericOrigins, LineageOrigins},
-    profile::SolaProfile,
     state::{CreatorsParam, SolaError},
     utils::create_non_transferable_mint,
     Dispatcher, IRegistryRef, TokenClass, TOKEN_SCHEMA_MAX_LEN,
@@ -132,20 +131,14 @@ pub struct MintBadge<'info> {
         ],
         bump,
     )]
-    pub class_mint: UncheckedAccount<'info>,
-    #[account(
-        seeds = [
-            "sola_profile".as_bytes(),
-            class_mint.key().as_ref(),
-        ],
-        bump,
-    )]
-    pub sola_profile: Account<'info, SolaProfile>,
+    pub profile_mint: UncheckedAccount<'info>,
+    /// CHECK:
+    pub profile_token: Option<UncheckedAccount<'info>>,
     /// CHECK:
     #[account(
         seeds = [
             "dispatcher".as_bytes(),
-            &token_class.controller.to_be_bytes()
+            profile_mint.key().as_ref(),
         ],
         bump,
     )]
@@ -161,7 +154,7 @@ pub struct MintBadge<'info> {
     #[account(
         seeds = [
             "class_generic".as_bytes(),
-            &class_id.to_be_bytes(),
+            token_class.key().as_ref(),
         ],
         bump,
     )]
@@ -222,8 +215,8 @@ pub fn mint_badge_handler(
 
     let registry = IRegistryRef {
         token_class: &accounts.token_class,
-        master_mint: &accounts.class_mint,
-        sola_profile: &accounts.sola_profile,
+        profile_mint: &accounts.profile_mint,
+        profile_token: accounts.profile_token.as_ref(),
         dispatcher: &accounts.dispatcher,
         default_dispatcher: &accounts.default_dispatcher,
         class_generic: &accounts.class_generic,
@@ -254,7 +247,6 @@ pub fn mint_badge_handler(
         master_mint: accounts.master_mint.key(),
         master_metadata: accounts.master_metadata.key(),
         master_edition: accounts.master_edition.key(),
-        owner: accounts.to.key(),
         badge_id: badge_id.to_be_bytes(),
         badge_bump: [ctx.bumps.badge_state],
         mint_bump: [ctx.bumps.master_mint],

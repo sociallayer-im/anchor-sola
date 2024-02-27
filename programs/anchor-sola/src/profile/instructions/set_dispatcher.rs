@@ -1,4 +1,4 @@
-use crate::{Dispatcher, SolaProfile};
+use crate::{state::SolaError, utils::is_owner, Dispatcher, SolaProfile};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
@@ -9,11 +9,13 @@ pub struct SetDispatcher<'info> {
         mut,
         seeds = [
             "mint_profile".as_bytes(),
-            &controller_id.to_be_bytes()[..],
+            &controller_id.to_be_bytes(),
         ],
         bump
     )]
     pub master_mint: UncheckedAccount<'info>,
+    /// CHECK:
+    pub master_token: UncheckedAccount<'info>,
     #[account(
         seeds = [
             "sola_profile".as_bytes(),
@@ -21,7 +23,6 @@ pub struct SetDispatcher<'info> {
         ],
         bump,
         has_one = master_mint,
-        has_one = owner,
     )]
     pub sola_profile: Account<'info, SolaProfile>,
     #[account(
@@ -30,7 +31,7 @@ pub struct SetDispatcher<'info> {
         space = 8 + Dispatcher::INIT_SPACE,
         seeds = [
             "dispatcher".as_bytes(),
-            &controller_id.to_be_bytes(),
+            master_mint.key().as_ref(),
         ],
         bump,
     )]
@@ -46,6 +47,14 @@ pub struct SetDispatcher<'info> {
 }
 
 pub fn handle_set_dispatcher(ctx: Context<SetDispatcher>, _controller_id: u64) -> Result<()> {
+    require!(
+        is_owner(
+            Some(&ctx.accounts.master_token),
+            ctx.accounts.owner.key(),
+            ctx.accounts.master_mint.as_ref()
+        ),
+        SolaError::NoPermission
+    );
     ctx.accounts.dispatcher.dispatcher = ctx.accounts.user_dispatcher.key();
 
     Ok(())

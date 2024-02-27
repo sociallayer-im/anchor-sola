@@ -27,7 +27,6 @@ pub struct MintProfile<'info> {
     #[account(
         seeds = [
             "sola_profile_creator".as_bytes(),
-            sola_profile_global.key().as_ref(),
             publisher.key().as_ref()
         ],
         bump,
@@ -39,7 +38,6 @@ pub struct MintProfile<'info> {
         payer = payer,
         seeds = [
             "sola_default_profiles".as_bytes(),
-            sola_profile_global.key().as_ref(),
             to.key().as_ref()
         ],
         bump,
@@ -187,7 +185,6 @@ fn initialize(
 ) -> Result<()> {
     let profile = &mut accounts.sola_profile;
     **profile = SolaProfile {
-        owner: accounts.to.key(),
         master_metadata: accounts.master_metadata.key(),
         master_mint: accounts.master_mint.key(),
         master_edition: accounts.master_edition.key(),

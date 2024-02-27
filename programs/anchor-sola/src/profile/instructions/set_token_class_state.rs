@@ -1,7 +1,7 @@
 use crate::{
     profile::utils::{is_dispatcher, is_owner},
     state::SolaError,
-    Dispatcher, SolaProfile, TokenClass, TokenClassState,
+    Dispatcher, TokenClass, TokenClassState,
 };
 use anchor_lang::prelude::*;
 
@@ -26,20 +26,13 @@ pub struct SetTokenClassState<'info> {
         bump
     )]
     pub master_mint: UncheckedAccount<'info>,
-    #[account(
-        seeds = [
-            "sola_profile".as_bytes(),
-            master_mint.key().as_ref(),
-        ],
-        bump,
-        has_one = master_mint,
-    )]
-    pub sola_profile: Account<'info, SolaProfile>,
+    /// CHECK:
+    pub master_token: Option<UncheckedAccount<'info>>,
     /// CHECK:
     #[account(
         seeds = [
             "dispatcher".as_bytes(),
-            &token_class.controller.to_be_bytes(),
+            master_mint.key().as_ref(),
         ],
         bump,
     )]
@@ -58,7 +51,7 @@ pub struct SetTokenClassState<'info> {
         space = 8 + TokenClassState::INIT_SPACE,
         seeds = [
             "token_class_state".as_bytes(),
-            &class_id.to_be_bytes(),
+            token_class.key().as_ref(),
             controller.key().as_ref(),
         ],
         bump,
@@ -88,12 +81,15 @@ pub fn handle_set_token_class_state(
     let authority = ctx.accounts.authority.key();
 
     require!(
-        is_owner(&ctx.accounts.sola_profile, authority)
-            || is_dispatcher(
-                &ctx.accounts.dispatcher,
-                &ctx.accounts.default_dispatcher,
-                authority
-            ),
+        is_owner(
+            ctx.accounts.master_token.as_ref(),
+            authority,
+            ctx.accounts.master_mint.as_ref()
+        ) || is_dispatcher(
+            &ctx.accounts.dispatcher,
+            &ctx.accounts.default_dispatcher,
+            authority
+        ),
         SolaError::NoPermission
     );
 

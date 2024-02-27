@@ -33,7 +33,9 @@ pub struct Register<'info> {
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
 pub struct RegisterParams {
+    // metadata里可以直接查询到，从sdk里提供该字段即可
     pub fungible: bool,
+    // spl_extension里可以查询到，同样在sdk里提供即可
     pub transferable: bool,
     pub revocable: bool,
     pub address: Pubkey,
@@ -50,14 +52,12 @@ pub fn handle_register(
     require_gt!(TOKEN_SCHEMA_MAX_LEN, params.schema.len());
 
     *ctx.accounts.token_class = TokenClass {
-        record: crate::TokenClassRecord {
-            fungible: params.fungible,
-            transferable: params.transferable,
-            revocable: params.revocable,
-        },
         address: params.address,
         schema: params.schema,
         controller: profile_id,
+        fungible: params.fungible,
+        transferable: params.transferable,
+        revocable: params.revocable,
     };
 
     ctx.accounts.sola_profile_global.counter += 1;

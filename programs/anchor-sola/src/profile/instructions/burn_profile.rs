@@ -18,7 +18,6 @@ pub struct BurnProfile<'info> {
         mut,
         seeds = [
             "sola_default_profiles".as_bytes(),
-            sola_profile_global.key().as_ref(),
             owner.key().as_ref()
         ],
         bump,
@@ -89,7 +88,6 @@ pub struct BurnProfile<'info> {
         has_one = master_mint,
         has_one = master_metadata,
         has_one = master_edition,
-        has_one = owner,
         close = close,
     )]
     pub sola_profile: Account<'info, SolaProfile>,

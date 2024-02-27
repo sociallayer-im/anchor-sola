@@ -1,7 +1,7 @@
 use crate::{
     profile::utils::{is_dispatcher, is_owner},
     state::SolaError,
-    Dispatcher, GroupController, SolaProfile,
+    Dispatcher, GroupController,
 };
 use anchor_lang::prelude::*;
 
@@ -18,20 +18,13 @@ pub struct SetGroupController<'info> {
         bump
     )]
     pub master_mint: UncheckedAccount<'info>,
-    #[account(
-        seeds = [
-            "sola_profile".as_bytes(),
-            master_mint.key().as_ref(),
-        ],
-        bump,
-        has_one = master_mint,
-    )]
-    pub sola_profile: Account<'info, SolaProfile>,
+    /// CHECK:
+    pub master_token: Option<UncheckedAccount<'info>>,
     /// CHECK:
     #[account(
         seeds = [
             "dispatcher".as_bytes(),
-            &controller_id.to_be_bytes(),
+            master_mint.key().as_ref(),
         ],
         bump,
     )]
@@ -50,7 +43,7 @@ pub struct SetGroupController<'info> {
         space = 8 + GroupController::INIT_SPACE,
         seeds = [
             "group_controller".as_bytes(),
-            &controller_id.to_be_bytes(),
+            master_mint.key().as_ref(),
             controller.key().as_ref(),
         ],
         bump,
@@ -81,12 +74,15 @@ pub fn handle_set_group_controller(
     let authority = ctx.accounts.authority.key();
 
     require!(
-        is_owner(&ctx.accounts.sola_profile, authority)
-            || is_dispatcher(
-                &ctx.accounts.dispatcher,
-                &ctx.accounts.default_dispatcher,
-                authority
-            ),
+        is_owner(
+            ctx.accounts.master_token.as_ref(),
+            authority,
+            ctx.accounts.master_mint.as_ref()
+        ) || is_dispatcher(
+            &ctx.accounts.dispatcher,
+            &ctx.accounts.default_dispatcher,
+            authority
+        ),
         SolaError::NoPermission
     );
 

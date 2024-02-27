@@ -12,7 +12,7 @@ pub struct BadgeGlobal {
     pub counter: u64,
 }
 
-/// seeds: "badge_state" + master_mint
+/// seeds: "badge_state" + badge_mint
 #[account]
 #[derive(InitSpace)]
 pub struct BadgeState {
@@ -24,7 +24,6 @@ pub struct BadgeState {
     pub master_mint: Pubkey,
     pub master_metadata: Pubkey,
     pub master_edition: Pubkey,
-    pub owner: Pubkey,
     pub badge_bump: [u8; 1],
     pub mint_bump: [u8; 1],
 }
@@ -47,7 +46,7 @@ impl BadgeState {
     }
 }
 
-/// seeds: "lineage_origins" + master_mint
+/// seeds: "lineage_origins" + badge_mint
 #[account]
 pub struct LineageOrigins {
     pub origins: Vec<u64>,
@@ -65,16 +64,16 @@ impl LineageOrigins {
             .is_some()
     }
 }
-/// seeds: "generic_origins" + token_id
+/// seeds: "generic_origins" + badge_mint
 #[account]
 #[derive(InitSpace)]
 pub struct GenericOrigins {
     pub origin: u64,
 }
 
-/// seeds: "proxy_owner" + owner
-#[account]
-#[derive(InitSpace)]
-pub struct ProxyOwner {
-    pub owner: Pubkey,
-}
+// /// seeds: "proxy_owner" + owner
+// #[account]
+// #[derive(InitSpace)]
+// pub struct ProxyOwner {
+//     pub owner: Pubkey,
+// }

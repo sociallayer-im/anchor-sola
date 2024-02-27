@@ -1,6 +1,8 @@
 use anchor_lang::{account, prelude::*, solana_program::pubkey::Pubkey};
 use mpl_token_metadata::MAX_URI_LENGTH;
 
+use crate::utils::is_owner;
+
 use super::utils::{is_dispatcher, RefAccount};
 
 #[derive(InitSpace)]
@@ -42,7 +44,6 @@ pub struct SolaProfile {
     pub master_metadata: Pubkey,
     pub master_edition: Pubkey,
     pub address_default_profiles: Option<Pubkey>,
-    pub owner: Pubkey,
     pub profile_bump: [u8; 1],
     pub mint_bump: [u8; 1],
 }
@@ -65,23 +66,17 @@ impl SolaProfile {
     }
 }
 
-#[derive(InitSpace)]
-#[account]
-pub struct TokenClassRecord {
-    // metadata里可以直接查询到，从sdk里提供该字段即可
-    pub fungible: bool,
-    // spl_extension里可以查询到，同样在sdk里提供即可
-    pub transferable: bool,
-    pub revocable: bool,
-}
-
 pub const TOKEN_SCHEMA_MAX_LEN: usize = 50;
 
 /// seeds: "token_class" + class_id
 #[derive(InitSpace)]
 #[account]
 pub struct TokenClass {
-    pub record: TokenClassRecord,
+    // metadata里可以直接查询到，从sdk里提供该字段即可
+    pub fungible: bool,
+    // spl_extension里可以查询到，同样在sdk里提供即可
+    pub transferable: bool,
+    pub revocable: bool,
     pub address: Pubkey,
     #[max_len(TOKEN_SCHEMA_MAX_LEN)]
     pub schema: String,
@@ -89,18 +84,7 @@ pub struct TokenClass {
     pub controller: u64,
 }
 
-// pub const TOKEN_SCHEMA_MAX_LEN: usize = 50;
-
-// /// 关联到每个profile上
-// ///
-// /// seeds: "group_controller" + profile_id(即controller_id)
-// ///
-// /// mapping(uint256 => mapping(address => bool)) private groupManagers;
-// ///
-// /// mapping(uint256 => mapping(address => bool)) private groupIssuers;
-// ///
-// /// mapping(uint256 => mapping(address => bool)) private groupMembers;
-///  seeds: "group_controller" + controller_id
+///  seeds: "group_controller" + profile_mint
 #[derive(InitSpace)]
 #[account]
 pub struct GroupController {
@@ -109,7 +93,7 @@ pub struct GroupController {
     pub is_member: bool,
 }
 
-/// seeds: "token_class_state" + class_id
+/// seeds: "token_class_state" + token_class.key().as_ref() + controller.key().as_ref()
 #[derive(InitSpace)]
 #[account]
 pub struct TokenClassState {
@@ -123,7 +107,7 @@ pub struct Dispatcher {
     pub dispatcher: Pubkey,
 }
 
-/// seeds: "class_generic" + class_id
+/// seeds: "class_generic" + token_calss.key().as_ref()
 #[derive(InitSpace)]
 #[account]
 pub struct ClassGeneric {
@@ -153,19 +137,12 @@ pub struct IRegistry<'info> {
         bump,
     )]
     pub master_mint: UncheckedAccount<'info>,
-    #[account(
-        seeds = [
-            "sola_profile".as_bytes(),
-            master_mint.key().as_ref(),
-        ],
-        bump,
-    )]
-    pub sola_profile: Account<'info, SolaProfile>,
+    pub master_mint: Account<'info, TokenAccount>,
     /// CHECK:
     #[account(
         seeds = [
             "dispatcher".as_bytes(),
-            &token_class.controller.to_be_bytes()
+           master_mint.key().as_ref(),
         ],
         bump,
     )]
@@ -181,7 +158,7 @@ pub struct IRegistry<'info> {
     #[account(
         seeds = [
             "class_generic".as_bytes(),
-            &class_id.to_be_bytes(),
+            token_class.key().as_ref(),
         ],
         bump,
     )]
@@ -193,32 +170,32 @@ pub struct IRegistryRef<'info: 'ref_info, 'ref_info> {
     /// seeds: "token_class" + &class_id.to_be_bytes()
     pub token_class: &'ref_info Account<'info, TokenClass>,
     /// CHECK:
-    /// seeds: "mint" + &token_class.controller.to_be_bytes()
-    pub master_mint: &'ref_info UncheckedAccount<'info>,
-    /// seeds: "sola_profile" +  master_mint.key().as_ref()
-    pub sola_profile: &'ref_info Account<'info, SolaProfile>,
+    /// seeds: "mint_profile" + &token_class.controller.to_be_bytes()
+    pub profile_mint: &'ref_info UncheckedAccount<'info>,
+    ///
+    pub profile_token: Option<&'ref_info UncheckedAccount<'info>>,
     /// CHECK:
-    /// seeds: "dispatcher" + &token_class.controller.to_be_bytes()
+    /// seeds: "dispatcher" + master_mint.key().as_ref()
     pub dispatcher: &'ref_info UncheckedAccount<'info>,
     /// seeds: "default_dispatcher"
     pub default_dispatcher: &'ref_info Account<'info, Dispatcher>,
     /// CHECK:
-    /// seeds: "class_generic" + class_id
+    /// seeds: "class_generic" + token_class.key().as_ref()
     pub class_generic: &'ref_info UncheckedAccount<'info>,
 }
 
 impl<'info: 'ref_info, 'ref_info> IRegistryRef<'info, 'ref_info> {
     pub fn is_token_class_owner(&self, addr: Pubkey) -> bool {
-        self.sola_profile.owner == addr
+        is_owner(self.profile_token, addr, self.profile_mint.as_ref())
             || is_dispatcher(&self.dispatcher, &self.default_dispatcher, addr)
     }
 
     pub fn get_token_class_transferable(&self) -> bool {
-        self.token_class.record.transferable
+        self.token_class.transferable
     }
 
     pub fn get_token_class_revocable(&self) -> bool {
-        self.token_class.record.revocable
+        self.token_class.revocable
     }
 
     pub fn get_class_schema(&self) -> String {
