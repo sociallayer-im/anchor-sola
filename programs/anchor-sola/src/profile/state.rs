@@ -1,4 +1,5 @@
 use anchor_lang::{account, prelude::*, solana_program::pubkey::Pubkey};
+use anchor_spl::token_2022::Token2022;
 use mpl_token_metadata::MAX_URI_LENGTH;
 
 use crate::utils::is_owner;
@@ -182,12 +183,17 @@ pub struct IRegistryRef<'info: 'ref_info, 'ref_info> {
     /// CHECK:
     /// seeds: "class_generic" + token_class.key().as_ref()
     pub class_generic: &'ref_info UncheckedAccount<'info>,
+    pub spl_token_program: &'ref_info Program<'info, Token2022>,
 }
 
 impl<'info: 'ref_info, 'ref_info> IRegistryRef<'info, 'ref_info> {
-    pub fn is_token_class_owner(&self, addr: Pubkey) -> bool {
-        is_owner(self.profile_token, addr, self.profile_mint.as_ref())
-            || is_dispatcher(&self.dispatcher, &self.default_dispatcher, addr)
+    pub fn is_token_class_owner(&self, addr: &'ref_info Signer<'info>) -> bool {
+        is_owner(
+            self.profile_token,
+            addr,
+            self.profile_mint.as_ref(),
+            &self.spl_token_program,
+        ) || is_dispatcher(&self.dispatcher, &self.default_dispatcher, addr)
     }
 
     pub fn get_token_class_transferable(&self) -> bool {

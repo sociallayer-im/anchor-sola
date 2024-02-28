@@ -4,7 +4,6 @@ import {
     TOKEN_2022_PROGRAM_ID,
 } from "@solana/spl-token";
 import * as web3 from "@solana/web3.js";
-import { assert } from "chai";
 import * as pda from "./addresses";
 import { AnchorSola } from "./anchor_sola";
 import {
@@ -15,7 +14,7 @@ import {
     SetGroupControllerParams,
     SetTokenClassStateParams,
 } from "./common";
-import { IRegistry, Mint } from "./registry";
+import { Mint } from "./registry";
 
 export class ProfileProgram {
     program: anchor.Program<AnchorSola>;
@@ -247,6 +246,7 @@ export class ProfileProgram {
                 classGeneric: pda.classGeneric(tokenClass)[0],
                 payer: payer.publicKey,
                 authority: authority ? authority.publicKey : payer.publicKey,
+                tokenProgram: TOKEN_2022_PROGRAM_ID,
                 systemProgram: web3.SystemProgram.programId,
                 rent: web3.SYSVAR_RENT_PUBKEY,
             })
@@ -291,6 +291,7 @@ export class ProfileProgram {
                 owner: owner ? owner.publicKey : payer.publicKey,
                 userDispatcher: dispatcher,
                 systemProgram: web3.SystemProgram.programId,
+                tokenProgram: TOKEN_2022_PROGRAM_ID,
                 rent: web3.SYSVAR_RENT_PUBKEY,
             })
             .signers(owner ? [owner, payer] : [payer])
@@ -317,6 +318,7 @@ export class ProfileProgram {
                 payer: payer.publicKey,
                 authority: authority ? authority.publicKey : payer.publicKey,
                 controller,
+                tokenProgram: TOKEN_2022_PROGRAM_ID,
                 systemProgram: web3.SystemProgram.programId,
                 rent: web3.SYSVAR_RENT_PUBKEY,
             })
@@ -371,6 +373,7 @@ export class ProfileProgram {
                 payer: payer.publicKey,
                 authority: authority ? authority.publicKey : payer.publicKey,
                 controller,
+                tokenProgram: TOKEN_2022_PROGRAM_ID,
                 systemProgram: web3.SystemProgram.programId,
                 rent: web3.SYSVAR_RENT_PUBKEY,
             })

@@ -1,5 +1,6 @@
 use crate::{state::SolaError, utils::is_owner, Dispatcher, SolaProfile};
 use anchor_lang::prelude::*;
+use anchor_spl::token_2022::Token2022;
 
 #[derive(Accounts)]
 #[instruction(controller_id: u64)]
@@ -42,6 +43,7 @@ pub struct SetDispatcher<'info> {
     pub owner: Signer<'info>,
     /// CHECK:
     pub user_dispatcher: UncheckedAccount<'info>,
+    pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 }
@@ -50,8 +52,9 @@ pub fn handle_set_dispatcher(ctx: Context<SetDispatcher>, _controller_id: u64) -
     require!(
         is_owner(
             Some(&ctx.accounts.master_token),
-            ctx.accounts.owner.key(),
-            ctx.accounts.master_mint.as_ref()
+            &ctx.accounts.owner,
+            ctx.accounts.master_mint.as_ref(),
+            &ctx.accounts.token_program
         ),
         SolaError::NoPermission
     );

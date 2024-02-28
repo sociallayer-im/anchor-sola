@@ -4,6 +4,7 @@ use crate::{
     Dispatcher, GroupController,
 };
 use anchor_lang::prelude::*;
+use anchor_spl::token_2022::Token2022;
 
 #[derive(Accounts)]
 #[instruction(controller_id: u64)]
@@ -55,6 +56,7 @@ pub struct SetGroupController<'info> {
     pub authority: Signer<'info>,
     /// CHECK:
     pub controller: UncheckedAccount<'info>,
+    pub token_program: Program<'info, Token2022>,
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
 }
@@ -71,17 +73,16 @@ pub fn handle_set_group_controller(
     _controller_id: u64,
     params: SetGroupControllerParams,
 ) -> Result<()> {
-    let authority = ctx.accounts.authority.key();
-
     require!(
         is_owner(
             ctx.accounts.master_token.as_ref(),
-            authority,
-            ctx.accounts.master_mint.as_ref()
+            &ctx.accounts.authority,
+            ctx.accounts.master_mint.as_ref(),
+            &ctx.accounts.token_program,
         ) || is_dispatcher(
             &ctx.accounts.dispatcher,
             &ctx.accounts.default_dispatcher,
-            authority
+            &ctx.accounts.authority
         ),
         SolaError::NoPermission
     );

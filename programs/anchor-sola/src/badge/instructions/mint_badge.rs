@@ -220,6 +220,7 @@ pub fn mint_badge_handler(
         dispatcher: &accounts.dispatcher,
         default_dispatcher: &accounts.default_dispatcher,
         class_generic: &accounts.class_generic,
+        spl_token_program: &accounts.token_program,
     };
 
     if let Some(generic) = accounts.generic_origins.as_mut() {
@@ -228,7 +229,7 @@ pub fn mint_badge_handler(
         generic.origin = origins[0];
     } else {
         require!(
-            registry.is_token_class_owner(accounts.publisher.key()),
+            registry.is_token_class_owner(&accounts.publisher),
             SolaError::NoPermission
         );
     }

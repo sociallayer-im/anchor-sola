@@ -559,6 +559,11 @@ export type AnchorSola = {
           "isSigner": false
         },
         {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -662,6 +667,11 @@ export type AnchorSola = {
           "isSigner": false
         },
         {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -735,6 +745,11 @@ export type AnchorSola = {
           "isSigner": true
         },
         {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -804,6 +819,11 @@ export type AnchorSola = {
         },
         {
           "name": "controller",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -1455,6 +1475,31 @@ export type AnchorSola = {
       "code": 6007,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
+    },
+    {
+      "code": 6008,
+      "name": "IncorrectOwner",
+      "msg": "incorrect owner."
+    },
+    {
+      "code": 6009,
+      "name": "MintMismatch",
+      "msg": "mint mismatch"
+    },
+    {
+      "code": 6010,
+      "name": "NotEnoughTokens",
+      "msg": "not enough tokens"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidTokenExtensionType",
+      "msg": "invalid token extension type"
+    },
+    {
+      "code": 6012,
+      "name": "MissingImmutableOwnerExtension",
+      "msg": "missing immutable owner extension"
     }
   ]
 };
@@ -2020,6 +2065,11 @@ export const IDL: AnchorSola = {
           "isSigner": false
         },
         {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -2123,6 +2173,11 @@ export const IDL: AnchorSola = {
           "isSigner": false
         },
         {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -2196,6 +2251,11 @@ export const IDL: AnchorSola = {
           "isSigner": true
         },
         {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -2265,6 +2325,11 @@ export const IDL: AnchorSola = {
         },
         {
           "name": "controller",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -2916,6 +2981,31 @@ export const IDL: AnchorSola = {
       "code": 6007,
       "name": "NotProfileCreator",
       "msg": "The publisher is not the profile creator."
+    },
+    {
+      "code": 6008,
+      "name": "IncorrectOwner",
+      "msg": "incorrect owner."
+    },
+    {
+      "code": 6009,
+      "name": "MintMismatch",
+      "msg": "mint mismatch"
+    },
+    {
+      "code": 6010,
+      "name": "NotEnoughTokens",
+      "msg": "not enough tokens"
+    },
+    {
+      "code": 6011,
+      "name": "InvalidTokenExtensionType",
+      "msg": "invalid token extension type"
+    },
+    {
+      "code": 6012,
+      "name": "MissingImmutableOwnerExtension",
+      "msg": "missing immutable owner extension"
     }
   ]
 };

@@ -10,7 +10,6 @@ import {
 export class IRegistry {
     tokenClass: web3.PublicKey;
     profileMint: web3.PublicKey;
-    solaProfile: web3.PublicKey;
     dispatcher: web3.PublicKey;
     defaultDispatcher: web3.PublicKey;
     classGeneric: web3.PublicKey;
@@ -23,7 +22,6 @@ export class IRegistry {
             .then((val) => {
                 const controllerId = val.controller;
                 this.profileMint = pda.mintProfile(controllerId)[0];
-                this.solaProfile = pda.solaProfile(this.profileMint)[0];
                 this.dispatcher = pda.dispatcher(this.profileMint)[0];
                 this.defaultDispatcher = pda.defaultDispatcher()[0];
                 this.classGeneric = pda.classGeneric(this.tokenClass)[0];

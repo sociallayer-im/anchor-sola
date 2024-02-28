@@ -18,4 +18,14 @@ pub enum SolaError {
     FoundDefaultProfiles,
     #[msg("The publisher is not the profile creator.")]
     NotProfileCreator,
+    #[msg("incorrect owner.")]
+    IncorrectOwner,
+    #[msg("mint mismatch")]
+    MintMismatch,
+    #[msg("not enough tokens")]
+    NotEnoughTokens,
+    #[msg("invalid token extension type")]
+    InvalidTokenExtensionType,
+    #[msg("missing immutable owner extension")]
+    MissingImmutableOwnerExtension,
 }
