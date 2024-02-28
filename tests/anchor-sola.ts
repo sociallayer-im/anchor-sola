@@ -10,6 +10,8 @@ import {
 import { AnchorSola, wait, ProfileProgram } from "../src";
 // import { expect } from "chai";
 import * as pda from "../src/addresses";
+import * as registry from "../src/registry";
+import { assert } from "chai";
 
 describe("anchor_sola", () => {
   // Configure the client to use the local cluster.
@@ -56,8 +58,14 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.all();
+    const global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
     console.log("init global:", global);
+
+    assert(global.chainid.eq(new anchor.BN(111)));
+    assert(global.baseUri == "https://example.com/my-sola.json");
+    assert(global.owner.equals(wallet.publicKey));
   });
 
   it("set profile creator", async () => {
@@ -83,14 +91,17 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const isProfileCreator = await program.account.isProfileCreator.all();
+    const isProfileCreator = await program.account.isProfileCreator.fetch(
+      pda.IsProfileCreator(wallet.publicKey)[0]
+    );
     console.log("isProfileCreator:", isProfileCreator);
+    assert(isProfileCreator.isProfileCreator == true);
   });
 
   it("update a global", async () => {
     const ix = await profileProgram.updateProfileGlobal(
       new BN(777),
-      "https://example.com/my-sola.json",
+      "https://example.com/update.json",
       wallet.payer,
       wallet.publicKey
     );
@@ -111,14 +122,22 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.all();
+    const global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
     console.log("update global:", global);
+    assert(global.baseUri == "https://example.com/update.json");
+    assert(global.chainid.eq(new anchor.BN(777)));
   });
 
-  it("mint a profile", async () => {
+  it("mint a group profile", async () => {
     const test_profile_owner = Keypair.generate();
+    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const profileId = oldGlobal.counter;
     const params = {
-      name: "MyProfile",
+      name: "MyGroupProfile",
       creators: [
         {
           address: wallet.publicKey,
@@ -132,8 +151,7 @@ describe("anchor_sola", () => {
       isMutable: true,
     };
 
-    const ix = await profileProgram.mintProfile(
-      new BN(2412),
+    const ix = await profileProgram.mintGroupProfile(
       params,
       wallet.payer,
       test_profile_owner.publicKey
@@ -160,14 +178,32 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.all();
+    const global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
     console.log("update global:", global);
-    const profile = await program.account.solaProfile.all();
+    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
+    const mint = new registry.Mint(
+      pda.mintProfile(profileId)[0],
+      test_profile_owner.publicKey
+    );
+    const profile = await program.account.solaProfile.fetch(
+      pda.solaProfile(mint.masterMint)[0]
+    );
     console.log("all profile:", profile);
+    assert(profile.addressDefaultProfiles == null);
+    assert(profile.masterMint.equals(mint.masterMint));
+    assert(profile.masterEdition.equals(mint.masterEdition));
+    assert(profile.masterMetadata.equals(mint.masterMetadata));
+    assert(new BN(profile.profileId, 10, "be").eq(profileId));
   });
 
   it("mint a default profile", async () => {
     const test_profile_owner = Keypair.generate();
+    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const profileId = oldGlobal.counter;
     const params = {
       name: "MyDefaultProfile",
       creators: [
@@ -210,63 +246,28 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.all();
+    const global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
     console.log("update global:", global);
-    const profile = await program.account.solaProfile.all();
-    console.log("all profile:", profile);
-    const defaultProfile = await program.account.defaultProfileId.all();
-    console.log("all profile:", defaultProfile);
-  });
-
-  it("mint a group profile", async () => {
-    const test_profile_owner = Keypair.generate();
-    const params = {
-      name: "MyGroupProfile",
-      creators: [
-        {
-          address: wallet.publicKey,
-          share: 100,
-        },
-      ],
-      curator: wallet.publicKey,
-      sellerFeeBasisPoints: 0,
-      symbol: "MSOL",
-      uri: "https://example.com/my-sola.json",
-      isMutable: true,
-    };
-
-    const ix = await profileProgram.mintGroupProfile(
-      params,
-      wallet.payer,
+    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
+    const mint = new registry.Mint(
+      pda.mintProfile(profileId)[0],
       test_profile_owner.publicKey
     );
-
-    console.log("Instruction:", ix);
-
-    const tx = await anchor.getProvider().sendAndConfirm(
-      new Transaction()
-        // 加钱！！！
-        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 400_000 }))
-        .add(ix),
-      [],
-      { skipPreflight: true }
+    const profile = await program.account.solaProfile.fetch(
+      pda.solaProfile(mint.masterMint)[0]
     );
-    console.log("Transaction signature:", tx);
-
-    await wait(1000);
-
-    const res = await anchor
-      .getProvider()
-      .connection.getParsedTransaction(tx, { commitment: "confirmed" });
-
-    console.log("Transaction res:", res);
-
-    const global = await program.account.solaProfileGlobal.all();
-    console.log("update global:", global);
-    const profile = await program.account.solaProfile.all();
     console.log("all profile:", profile);
-    const defaultProfile = await program.account.defaultProfileId.all();
-    console.log("default profile:", defaultProfile);
+    assert(
+      profile.addressDefaultProfiles.equals(
+        pda.solaDefaultProfiles(test_profile_owner.publicKey)[0]
+      )
+    );
+    assert(profile.masterMint.equals(mint.masterMint));
+    assert(profile.masterEdition.equals(mint.masterEdition));
+    assert(profile.masterMetadata.equals(mint.masterMetadata));
+    assert(new BN(profile.profileId, 10, "be").eq(profileId));
   });
 
   it("burn a profile", async () => {
@@ -342,80 +343,6 @@ describe("anchor_sola", () => {
       console.log("Profile after burn:", error);
     }
   });
-
-  // it("creates a new sola", async () => {
-
-  //   const decimals = 2;
-  //   const amount = new BN(1000);
-  //   const params = {
-  //     creators: [
-  //       {
-  //         address: wallet.publicKey,
-  //         share: 100,
-  //       },
-  //     ],
-  //     curator: wallet.publicKey,
-  //     sellerFeeBasisPoints: 0,
-  //     symbol: "MSOL",
-  //     uri: "https://example.com/my-sola.json",
-  //     isBurnable: true,
-  //     isMutable: true,
-  //     updateAuthorityIsSigner: true,
-  //     updatePrimarySaleHappenedViaToken: false,
-  //   };
-
-  //   const ix = await
-  //     solaClient.getCreateInstruction(decimals, amount, params);
-
-  //   console.log("Instruction:", ix);
-
-  //   const tx = await
-  //     anchor.getProvider().sendAndConfirm(new Transaction().add(ix), [], { skipPreflight: true });
-
-  //   console.log("Transaction signature:", tx);
-  // });
-
-  // it("mints new tokens to a sola", async () => {
-  //   const amount = new BN(100);
-
-  //   const ix = await solaClient.getMintInstruction(amount);
-
-  //   const tx = await
-  //     anchor.getProvider().sendAndConfirm(new Transaction().add(ix));
-
-  //   console.log("Transaction signature:", tx);
-  // });
-
-  // it("transfers tokens from one account to another", async () => {
-  //   const destination = Keypair.generate();
-
-  //   const ix = await solaClient.getTransferInstruction(new BN(10), destination.publicKey);
-
-  //   const tx = await
-  //     anchor.getProvider().sendAndConfirm(new Transaction().add(ix));;
-
-  //   console.log("Transaction signature:", tx);
-  // });
-
-  // it("burns tokens from a sola", async () => {
-  //   const amount = new BN(50);
-
-  //   const ix = await solaClient.getBurnInstruction(amount);
-
-  //   const tx = await
-  //     anchor.getProvider().sendAndConfirm(new Transaction().add(ix));;
-
-  //   console.log("Transaction signature:", tx);
-  // });
-
-  // it("deletes a sola", async () => {
-  //   const ix = await solaClient.getDeleteInstruction();
-
-  //   const tx = await
-  //     anchor.getProvider().sendAndConfirm(new Transaction().add(ix));;
-
-  //   console.log("Transaction signature:", tx);
-  // });
 
   // Add more tests as needed
 });

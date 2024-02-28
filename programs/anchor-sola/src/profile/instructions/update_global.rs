@@ -4,6 +4,7 @@ use anchor_lang::prelude::*;
 #[derive(Accounts)]
 pub struct UpdateProfileGlobal<'info> {
     #[account(
+        mut,
         seeds = [
             "sola_profile_global".as_bytes()
         ],

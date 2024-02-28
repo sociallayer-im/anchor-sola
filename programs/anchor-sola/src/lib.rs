@@ -40,12 +40,8 @@ pub mod anchor_sola {
         Ok(())
     }
 
-    pub fn mint_profile(
-        ctx: Context<MintProfile>,
-        profile_id: Option<u64>,
-        params: MintProfileParams,
-    ) -> Result<u64> {
-        let profile_id = profile::mint_profile_handler(ctx, profile_id, params)?;
+    pub fn mint_profile(ctx: Context<MintProfile>, params: MintProfileParams) -> Result<u64> {
+        let profile_id = profile::mint_profile_handler(ctx, params)?;
         Ok(profile_id)
     }
 

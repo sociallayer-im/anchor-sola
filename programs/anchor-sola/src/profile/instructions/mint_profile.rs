@@ -14,7 +14,6 @@ use mpl_token_metadata::{
 };
 
 #[derive(Accounts)]
-#[instruction(profile_id: Option<u64>)]
 pub struct MintProfile<'info> {
     #[account(
         mut,
@@ -51,7 +50,7 @@ pub struct MintProfile<'info> {
         mut,
         seeds = [
             "mint_profile".as_bytes(),
-            &profile_id.unwrap_or(sola_profile_global.counter).to_be_bytes()[..],
+            &sola_profile_global.counter.to_be_bytes()[..],
         ],
         bump
     )]
@@ -132,20 +131,14 @@ pub struct MintProfileParams {
     pub is_mutable: bool,
 }
 
-pub fn mint_profile_handler(
-    ctx: Context<MintProfile>,
-    profile_id: Option<u64>,
-    params: MintProfileParams,
-) -> Result<u64> {
+pub fn mint_profile_handler(ctx: Context<MintProfile>, params: MintProfileParams) -> Result<u64> {
     let accounts = ctx.accounts;
 
+    let profile_id = accounts.sola_profile_global.counter;
+
     if let Some(default_profile) = accounts.address_default_profiles.as_deref_mut() {
-        require!(profile_id.is_none(), SolaError::ProfileIdNotNull);
-
-        default_profile.profile_id = accounts.sola_profile_global.counter;
+        default_profile.profile_id = profile_id;
     }
-
-    let profile_id = profile_id.unwrap_or(accounts.sola_profile_global.counter);
 
     msg!(
         "befor mint counter:{:?}",
