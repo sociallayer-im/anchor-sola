@@ -528,11 +528,6 @@ export type AnchorSola = {
           isSigner: false;
         },
         {
-          name: "solaProfile";
-          isMut: false;
-          isSigner: false;
-        },
-        {
           name: "dispatcher";
           isMut: true;
           isSigner: false;
@@ -850,7 +845,7 @@ export type AnchorSola = {
       accounts: [
         {
           name: "solaProfileGlobal";
-          isMut: false;
+          isMut: true;
           isSigner: false;
         },
         {
@@ -1984,11 +1979,6 @@ export const IDL: AnchorSola = {
           isSigner: false,
         },
         {
-          name: "solaProfile",
-          isMut: false,
-          isSigner: false,
-        },
-        {
           name: "dispatcher",
           isMut: true,
           isSigner: false,
@@ -2306,7 +2296,7 @@ export const IDL: AnchorSola = {
       accounts: [
         {
           name: "solaProfileGlobal",
-          isMut: false,
+          isMut: true,
           isSigner: false,
         },
         {

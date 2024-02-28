@@ -270,6 +270,92 @@ describe("anchor_sola", () => {
     assert(new BN(profile.profileId, 10, "be").eq(profileId));
   });
 
+  it("set default dispatcher", async () => {
+    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+
+    const dispatcher = Keypair.generate();
+    const profileId = oldGlobal.counter;
+    const params = {
+      name: "MyDispatcher",
+      creators: [
+        {
+          address: wallet.publicKey,
+          share: 100,
+        },
+      ],
+      curator: wallet.publicKey,
+      sellerFeeBasisPoints: 0,
+      symbol: "MSOL",
+      uri: "https://example.com/my-dispatcher.json",
+      isMutable: true,
+    };
+
+    const mintIx = await profileProgram.mintDefaultProfile(
+      params,
+      wallet.payer,
+      dispatcher.publicKey
+    );
+
+    const setDefaultDispatcherIx = await profileProgram.setDefaultDispatcher(
+      wallet.payer,
+      dispatcher.publicKey
+    );
+
+    const tx = await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintIx)
+        .add(setDefaultDispatcherIx),
+      [],
+      { skipPreflight: true }
+    );
+
+    console.log("Transaction signature:", tx);
+
+    await wait(1000);
+
+    const res = await anchor
+      .getProvider()
+      .connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
+    const global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    console.log("update global:", global);
+    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
+    const mint = new registry.Mint(
+      pda.mintProfile(profileId)[0],
+      dispatcher.publicKey
+    );
+    const profile = await program.account.solaProfile.fetch(
+      pda.solaProfile(mint.masterMint)[0]
+    );
+    console.log("all profile:", profile);
+    assert(
+      profile.addressDefaultProfiles.equals(
+        pda.solaDefaultProfiles(dispatcher.publicKey)[0]
+      )
+    );
+    assert(profile.masterMint.equals(mint.masterMint));
+    assert(profile.masterEdition.equals(mint.masterEdition));
+    assert(profile.masterMetadata.equals(mint.masterMetadata));
+    assert(new BN(profile.profileId, 10, "be").eq(profileId));
+    const defaultDispatcher = await program.account.dispatcher.fetch(
+      pda.defaultDispatcher()[0]
+    );
+    assert(defaultDispatcher.dispatcher.equals(dispatcher.publicKey));
+
+    // const userDispatcher = await program.account.dispatcher.fetch(
+    //   pda.dispatcher(mint.masterMint)[0]
+    // );
+    // assert(userDispatcher.dispatcher.equals(dispatcher.publicKey));
+  });
+
   it("burn a profile", async () => {
     const test_profile_owner = Keypair.generate();
     const params = {
@@ -342,6 +428,93 @@ describe("anchor_sola", () => {
     } catch (error) {
       console.log("Profile after burn:", error);
     }
+  });
+
+  it("set dispatcher", async () => {
+    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+
+    const dispatcher = Keypair.generate();
+    const profileId = oldGlobal.counter;
+    const params = {
+      name: "MyDispatcher",
+      creators: [
+        {
+          address: wallet.publicKey,
+          share: 100,
+        },
+      ],
+      curator: wallet.publicKey,
+      sellerFeeBasisPoints: 0,
+      symbol: "MSOL",
+      uri: "https://example.com/my-dispatcher.json",
+      isMutable: true,
+    };
+
+    const mintIx = await profileProgram.mintDefaultProfile(
+      params,
+      wallet.payer,
+      dispatcher.publicKey
+    );
+
+    const setDispatcherIx = await profileProgram.setDispatcher(
+      profileId,
+      wallet.payer,
+      dispatcher.publicKey,
+      dispatcher
+    );
+
+    console.log("setDispatcherIx:", setDispatcherIx);
+
+    const tx = await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintIx)
+        .add(setDispatcherIx),
+      // TODO: 这里不知道为什么，需要单独加签名，我感觉可能是因为按照第一个mintIx的签名来处理的，所以签名失败
+      [wallet.payer, dispatcher],
+      { skipPreflight: true }
+    );
+
+    console.log("Transaction signature:", tx);
+
+    await wait(1000);
+
+    const res = await anchor
+      .getProvider()
+      .connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
+    const global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    console.log("update global:", global);
+    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
+    const mint = new registry.Mint(
+      pda.mintProfile(profileId)[0],
+      dispatcher.publicKey
+    );
+    const profile = await program.account.solaProfile.fetch(
+      pda.solaProfile(mint.masterMint)[0]
+    );
+    console.log("all profile:", profile);
+    assert(
+      profile.addressDefaultProfiles.equals(
+        pda.solaDefaultProfiles(dispatcher.publicKey)[0]
+      )
+    );
+    assert(profile.masterMint.equals(mint.masterMint));
+    assert(profile.masterEdition.equals(mint.masterEdition));
+    assert(profile.masterMetadata.equals(mint.masterMetadata));
+    assert(new BN(profile.profileId, 10, "be").eq(profileId));
+
+    const userDispatcher = await program.account.dispatcher.fetch(
+      pda.dispatcher(mint.masterMint)[0]
+    );
+    assert(userDispatcher.dispatcher.equals(dispatcher.publicKey));
   });
 
   // Add more tests as needed

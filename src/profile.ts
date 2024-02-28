@@ -246,11 +246,15 @@ export class ProfileProgram {
     owner?: web3.Keypair
   ): Promise<web3.TransactionInstruction> {
     const profileMint = pda.mintProfile(controllerId)[0];
+    const mint = new Mint(
+      profileMint,
+      owner ? owner.publicKey : payer.publicKey
+    );
     return this.program.methods
       .setDispatcher(controllerId)
       .accounts({
         masterMint: profileMint,
-        solaProfile: pda.solaProfile(profileMint)[0],
+        masterToken: mint.masterToken,
         dispatcher: pda.dispatcher(profileMint)[0],
         payer: payer.publicKey,
         owner: owner ? owner.publicKey : payer.publicKey,
@@ -259,7 +263,7 @@ export class ProfileProgram {
         tokenProgram: TOKEN_2022_PROGRAM_ID,
         rent: web3.SYSVAR_RENT_PUBKEY,
       })
-      .signers(owner ? [owner, payer] : [payer])
+      .signers(owner ? [payer, owner] : [payer])
       .instruction();
   }
 

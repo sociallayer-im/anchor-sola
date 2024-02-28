@@ -1,4 +1,4 @@
-use crate::{state::SolaError, utils::is_owner, Dispatcher, SolaProfile};
+use crate::{state::SolaError, utils::is_owner, Dispatcher};
 use anchor_lang::prelude::*;
 use anchor_spl::token_2022::Token2022;
 
@@ -17,15 +17,6 @@ pub struct SetDispatcher<'info> {
     pub master_mint: UncheckedAccount<'info>,
     /// CHECK:
     pub master_token: UncheckedAccount<'info>,
-    #[account(
-        seeds = [
-            "sola_profile".as_bytes(),
-            master_mint.key().as_ref(),
-        ],
-        bump,
-        has_one = master_mint,
-    )]
-    pub sola_profile: Account<'info, SolaProfile>,
     #[account(
         init_if_needed,
         payer = payer,
