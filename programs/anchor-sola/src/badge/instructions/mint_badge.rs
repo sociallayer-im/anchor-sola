@@ -223,6 +223,8 @@ pub fn mint_badge_handler(
         spl_token_program: &accounts.token_program,
     };
 
+    require!(!registry.get_token_class_fungible(), SolaError::NotSupport);
+
     if let Some(generic) = accounts.generic_origins.as_mut() {
         require!(registry.is_generic_badge_class(), SolaError::NoPermission);
         require_eq!(origins.len(), 1);

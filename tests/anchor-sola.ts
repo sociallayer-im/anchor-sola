@@ -18,6 +18,8 @@ describe("anchor_sola", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const wallet = anchor.Wallet.local();
+  const defaultDispatcher = Keypair.generate();
+
   const program = anchor.workspace.AnchorSola as Program<AnchorSola>;
 
   const profileProgram = new ProfileProgram(program);
@@ -275,7 +277,6 @@ describe("anchor_sola", () => {
       pda.solaProfileGlobal()[0]
     );
 
-    const dispatcher = Keypair.generate();
     const profileId = oldGlobal.counter;
     const params = {
       name: "MyDispatcher",
@@ -295,12 +296,12 @@ describe("anchor_sola", () => {
     const mintIx = await profileProgram.mintDefaultProfile(
       params,
       wallet.payer,
-      dispatcher.publicKey
+      defaultDispatcher.publicKey
     );
 
     const setDefaultDispatcherIx = await profileProgram.setDefaultDispatcher(
       wallet.payer,
-      dispatcher.publicKey
+      defaultDispatcher.publicKey
     );
 
     const tx = await anchor.getProvider().sendAndConfirm(
@@ -330,7 +331,7 @@ describe("anchor_sola", () => {
     assert(global.counter.eq(profileId.add(new anchor.BN(1))));
     const mint = new registry.Mint(
       pda.mintProfile(profileId)[0],
-      dispatcher.publicKey
+      defaultDispatcher.publicKey
     );
     const profile = await program.account.solaProfile.fetch(
       pda.solaProfile(mint.masterMint)[0]
@@ -338,22 +339,17 @@ describe("anchor_sola", () => {
     console.log("all profile:", profile);
     assert(
       profile.addressDefaultProfiles.equals(
-        pda.solaDefaultProfiles(dispatcher.publicKey)[0]
+        pda.solaDefaultProfiles(defaultDispatcher.publicKey)[0]
       )
     );
     assert(profile.masterMint.equals(mint.masterMint));
     assert(profile.masterEdition.equals(mint.masterEdition));
     assert(profile.masterMetadata.equals(mint.masterMetadata));
     assert(new BN(profile.profileId, 10, "be").eq(profileId));
-    const defaultDispatcher = await program.account.dispatcher.fetch(
+    const getDefaultDispatcher = await program.account.dispatcher.fetch(
       pda.defaultDispatcher()[0]
     );
-    assert(defaultDispatcher.dispatcher.equals(dispatcher.publicKey));
-
-    // const userDispatcher = await program.account.dispatcher.fetch(
-    //   pda.dispatcher(mint.masterMint)[0]
-    // );
-    // assert(userDispatcher.dispatcher.equals(dispatcher.publicKey));
+    assert(getDefaultDispatcher.dispatcher.equals(defaultDispatcher.publicKey));
   });
 
   it("burn a profile", async () => {
@@ -515,6 +511,243 @@ describe("anchor_sola", () => {
       pda.dispatcher(mint.masterMint)[0]
     );
     assert(userDispatcher.dispatcher.equals(dispatcher.publicKey));
+  });
+
+  it("set group controller", async () => {
+    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+
+    const dispatcher = Keypair.generate();
+    const owner = Keypair.generate();
+
+    const profileId = oldGlobal.counter;
+    const params = {
+      name: "MyDispatcher",
+      creators: [
+        {
+          address: wallet.publicKey,
+          share: 100,
+        },
+      ],
+      curator: wallet.publicKey,
+      sellerFeeBasisPoints: 0,
+      symbol: "MSOL",
+      uri: "https://example.com/my-dispatcher.json",
+      isMutable: true,
+    };
+
+    const mintIx = await profileProgram.mintDefaultProfile(
+      params,
+      wallet.payer,
+      owner.publicKey
+    );
+
+    const tx = await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintIx),
+      // TODO: 这里不知道为什么，需要单独加签名，我感觉可能是因为按照第一个mintIx的签名来处理的，所以签名失败
+      [wallet.payer],
+      { skipPreflight: true }
+    );
+
+    console.log("Transaction signature:", tx);
+
+    await wait(1000);
+
+    const res = await anchor
+      .getProvider()
+      .connection.getParsedTransaction(tx, { commitment: "confirmed" });
+
+    console.log("Transaction res:", res);
+
+    const global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    console.log("update global:", global);
+    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
+    const mint = new registry.Mint(
+      pda.mintProfile(profileId)[0],
+      owner.publicKey
+    );
+    const profile = await program.account.solaProfile.fetch(
+      pda.solaProfile(mint.masterMint)[0]
+    );
+    console.log("all profile:", profile);
+    assert(
+      profile.addressDefaultProfiles.equals(
+        pda.solaDefaultProfiles(owner.publicKey)[0]
+      )
+    );
+    assert(profile.masterMint.equals(mint.masterMint));
+    assert(profile.masterEdition.equals(mint.masterEdition));
+    assert(profile.masterMetadata.equals(mint.masterMetadata));
+    assert(new BN(profile.profileId, 10, "be").eq(profileId));
+
+    console.log("will test default dispatcher can set group controller.");
+
+    const otherController = Keypair.generate();
+
+    const defaultDispatcherCanSetGroupControllerIx =
+      await profileProgram.setGroupController(
+        profileId,
+        wallet.payer,
+        otherController.publicKey,
+        {
+          isIssuer: true,
+          isMember: false,
+          isManager: true,
+        },
+        defaultDispatcher
+      );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(defaultDispatcherCanSetGroupControllerIx),
+      [wallet.payer, defaultDispatcher],
+      { skipPreflight: true }
+    );
+
+    await wait(1000);
+
+    const fetchOtherController = await program.account.groupController.fetch(
+      pda.groupController(mint.masterMint, otherController.publicKey)[0]
+    );
+
+    assert(fetchOtherController.isIssuer == true);
+    assert(fetchOtherController.isManager == true);
+    assert(fetchOtherController.isMember == false);
+
+    const setDispatcherIx = await profileProgram.setDispatcher(
+      profileId,
+      wallet.payer,
+      dispatcher.publicKey,
+      owner
+    );
+
+    console.log("setDispatcherIx:", setDispatcherIx);
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(setDispatcherIx),
+      // TODO: 这里不知道为什么，需要单独加签名，我感觉可能是因为按照第一个mintIx的签名来处理的，所以签名失败
+      [wallet.payer, owner],
+      { skipPreflight: true }
+    );
+
+    await wait(1000);
+
+    const userDispatcher = await program.account.dispatcher.fetch(
+      pda.dispatcher(mint.masterMint)[0]
+    );
+    assert(userDispatcher.dispatcher.equals(dispatcher.publicKey));
+
+    console.log("will test dispatcher can set group controller.");
+
+    const controller = Keypair.generate();
+
+    const dispatcherCanSetGroupControllerIx =
+      await profileProgram.setGroupController(
+        profileId,
+        wallet.payer,
+        controller.publicKey,
+        {
+          isIssuer: true,
+          isMember: false,
+          isManager: true,
+        },
+        dispatcher
+      );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(dispatcherCanSetGroupControllerIx),
+      [wallet.payer, dispatcher],
+      { skipPreflight: true }
+    );
+
+    await wait(1000);
+
+    const fetchController = await program.account.groupController.fetch(
+      pda.groupController(mint.masterMint, controller.publicKey)[0]
+    );
+
+    assert(fetchController.isIssuer == true);
+    assert(fetchController.isManager == true);
+    assert(fetchController.isMember == false);
+
+    console.log("will test owner can set group controller.");
+
+    const newController = Keypair.generate();
+    const ownerCanSetGroupControllerIx =
+      await profileProgram.setGroupController(
+        profileId,
+        wallet.payer,
+        newController.publicKey,
+        {
+          isIssuer: true,
+          isMember: false,
+          isManager: true,
+        },
+        owner
+      );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(ownerCanSetGroupControllerIx),
+      [wallet.payer, owner],
+      { skipPreflight: true }
+    );
+
+    await wait(1000);
+
+    const fetchNewController = await program.account.groupController.fetch(
+      pda.groupController(mint.masterMint, newController.publicKey)[0]
+    );
+
+    assert(fetchNewController.isIssuer == true);
+    assert(fetchNewController.isManager == true);
+    assert(fetchNewController.isMember == false);
+
+    console.log("will test default dispatcher can't set group controller.");
+
+    const againController = Keypair.generate();
+
+    const againDefaultDispatcherCanSetGroupControllerIx =
+      await profileProgram.setGroupController(
+        profileId,
+        wallet.payer,
+        againController.publicKey,
+        {
+          isIssuer: true,
+          isMember: false,
+          isManager: true,
+        },
+        wallet.payer
+      );
+
+    try {
+      await anchor.getProvider().sendAndConfirm(
+        new Transaction()
+          // 加钱！！！
+          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+          .add(againDefaultDispatcherCanSetGroupControllerIx),
+        [wallet.payer],
+        { skipPreflight: true }
+      );
+    } catch (error) {
+      console.log("Default dispatcher no perssion:", error);
+    }
   });
 
   // Add more tests as needed

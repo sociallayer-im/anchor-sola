@@ -11,10 +11,9 @@ use anchor_spl::token_2022::Token2022;
 pub struct SetGroupController<'info> {
     /// CHECK:
     #[account(
-        mut,
         seeds = [
-            "mint".as_bytes(),
-            &controller_id.to_be_bytes()[..],
+            "mint_profile".as_bytes(),
+            &controller_id.to_be_bytes(),
         ],
         bump
     )]

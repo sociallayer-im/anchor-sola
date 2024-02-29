@@ -204,6 +204,10 @@ impl<'info: 'ref_info, 'ref_info> IRegistryRef<'info, 'ref_info> {
         self.token_class.revocable
     }
 
+    pub fn get_token_class_fungible(&self) -> bool {
+        self.token_class.fungible
+    }
+
     pub fn get_class_schema(&self) -> String {
         self.token_class.schema.clone()
     }
