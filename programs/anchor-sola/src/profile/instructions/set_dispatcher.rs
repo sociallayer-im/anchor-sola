@@ -42,7 +42,7 @@ pub struct SetDispatcher<'info> {
 pub fn handle_set_dispatcher(ctx: Context<SetDispatcher>, _controller_id: u64) -> Result<()> {
     require!(
         is_owner(
-            Some(&ctx.accounts.master_token),
+            &ctx.accounts.master_token,
             &ctx.accounts.owner,
             ctx.accounts.master_mint.as_ref(),
             &ctx.accounts.token_program

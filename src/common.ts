@@ -45,7 +45,6 @@ export interface RegisterParams {
   revocable: boolean;
   address: PublicKey;
   schema: string;
-  controller: anchor.BN;
 }
 
 export interface SetClassGenericParams {

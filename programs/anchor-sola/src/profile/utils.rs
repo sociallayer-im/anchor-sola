@@ -19,24 +19,21 @@ use mpl_token_metadata::types::TokenStandard;
 use crate::{state::SolaError, Dispatcher, GroupController};
 
 pub fn is_owner(
-    master_token: Option<&UncheckedAccount<'_>>,
+    master_token: &UncheckedAccount<'_>,
     authority: &Signer<'_>,
     master_mint: &AccountInfo<'_>,
     spl_token_program: &Program<'_, Token2022>,
 ) -> bool {
-    master_token
-        .and_then(|ua| {
-            validate_token(
-                master_mint.as_ref(),
-                ua.as_ref(),
-                Some(authority),
-                spl_token_program,
-                Some(TokenStandard::ProgrammableNonFungible),
-                Some(1),
-            )
-            .ok()
-        })
-        .is_some()
+    validate_token(
+        master_mint.as_ref(),
+        master_token.as_ref(),
+        Some(authority),
+        spl_token_program,
+        Some(TokenStandard::ProgrammableNonFungible),
+        Some(1),
+    )
+    .ok()
+    .is_some()
 }
 
 pub fn is_dispatcher<'info: 'ref_info, 'ref_info>(
@@ -51,8 +48,10 @@ pub fn is_dispatcher<'info: 'ref_info, 'ref_info>(
         == authority.key()
 }
 
-pub fn is_group_manager(group_controller: &Account<'_, GroupController>) -> bool {
-    group_controller.is_manager
+pub fn is_group_manager(group_controller: &UncheckedAccount<'_>) -> bool {
+    RefAccount::<GroupController>::new(group_controller.as_ref())
+        .map(|gp| gp.is_manager)
+        .unwrap_or(false)
 }
 
 #[derive(Clone)]

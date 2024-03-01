@@ -85,7 +85,7 @@ pub struct TokenClass {
     pub controller: u64,
 }
 
-///  seeds: "group_controller" + profile_mint
+///  seeds: "group_controller" + profile_mint + controller
 #[derive(InitSpace)]
 #[account]
 pub struct GroupController {
@@ -174,7 +174,7 @@ pub struct IRegistryRef<'info: 'ref_info, 'ref_info> {
     /// seeds: "mint_profile" + &token_class.controller.to_be_bytes()
     pub profile_mint: &'ref_info UncheckedAccount<'info>,
     ///
-    pub profile_token: Option<&'ref_info UncheckedAccount<'info>>,
+    pub profile_token: &'ref_info UncheckedAccount<'info>,
     /// CHECK:
     /// seeds: "dispatcher" + master_mint.key().as_ref()
     pub dispatcher: &'ref_info UncheckedAccount<'info>,

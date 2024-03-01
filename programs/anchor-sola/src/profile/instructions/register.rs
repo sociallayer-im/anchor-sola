@@ -40,7 +40,6 @@ pub struct RegisterParams {
     pub revocable: bool,
     pub address: Pubkey,
     pub schema: String,
-    pub controller: u64,
 }
 
 pub fn handle_register(
@@ -60,7 +59,7 @@ pub fn handle_register(
         revocable: params.revocable,
     };
 
-    ctx.accounts.sola_profile_global.counter += 1;
+    ctx.accounts.sola_profile_global.class_counter += 1;
 
     Ok(())
 }

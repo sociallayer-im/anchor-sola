@@ -21,14 +21,14 @@ pub struct SetTokenClassState<'info> {
     #[account(
         mut,
         seeds = [
-            "mint".as_bytes(),
+            "mint_profile".as_bytes(),
             &token_class.controller.to_be_bytes()[..],
         ],
         bump
     )]
     pub master_mint: UncheckedAccount<'info>,
     /// CHECK:
-    pub master_token: Option<UncheckedAccount<'info>>,
+    pub master_token: UncheckedAccount<'info>,
     /// CHECK:
     #[account(
         seeds = [
@@ -82,7 +82,7 @@ pub fn handle_set_token_class_state(
 ) -> Result<()> {
     require!(
         is_owner(
-            ctx.accounts.master_token.as_ref(),
+            &ctx.accounts.master_token,
             &ctx.accounts.authority,
             ctx.accounts.master_mint.as_ref(),
             &ctx.accounts.token_program,

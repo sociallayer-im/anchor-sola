@@ -171,7 +171,7 @@ export class ProfileProgram {
     return this.program.methods
       .register(classId, profileId, params)
       .accounts({
-        solaProfileGlobal: pda.solaProfileGlobal[0],
+        solaProfileGlobal: pda.solaProfileGlobal()[0],
         tokenClass: pda.tokenClass(classId)[0],
         payer: payer.publicKey,
         systemProgram: web3.SystemProgram.programId,
@@ -324,12 +324,13 @@ export class ProfileProgram {
     params: SetTokenClassStateParams,
     payer: web3.Keypair,
     controller: web3.PublicKey,
-    authority?: web3.Keypair
+    authority?: web3.Keypair,
+    profileId?: anchor.BN
   ): Promise<web3.TransactionInstruction> {
     const tokenClass = pda.tokenClass(classId)[0];
-    const controllerId = (
-      await this.program.account.tokenClass.fetch(tokenClass)
-    ).controller;
+    const controllerId = profileId
+      ? profileId
+      : (await this.program.account.tokenClass.fetch(tokenClass)).controller;
     const profileMint = pda.mintProfile(controllerId)[0];
     const mint = new Mint(
       profileMint,

@@ -133,7 +133,7 @@ pub struct MintBadge<'info> {
     )]
     pub profile_mint: UncheckedAccount<'info>,
     /// CHECK:
-    pub profile_token: Option<UncheckedAccount<'info>>,
+    pub profile_token: UncheckedAccount<'info>,
     /// CHECK:
     #[account(
         seeds = [
@@ -216,7 +216,7 @@ pub fn mint_badge_handler(
     let registry = IRegistryRef {
         token_class: &accounts.token_class,
         profile_mint: &accounts.profile_mint,
-        profile_token: accounts.profile_token.as_ref(),
+        profile_token: &accounts.profile_token,
         dispatcher: &accounts.dispatcher,
         default_dispatcher: &accounts.default_dispatcher,
         class_generic: &accounts.class_generic,

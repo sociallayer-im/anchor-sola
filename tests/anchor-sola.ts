@@ -1,17 +1,10 @@
-import { BN, Program } from "@coral-xyz/anchor";
 import * as anchor from "@coral-xyz/anchor";
-import {
-  ComputeBudgetProgram,
-  Keypair,
-  // PublicKey,
-  Transaction,
-  // TransactionInstruction,
-} from "@solana/web3.js";
-import { AnchorSola, wait, ProfileProgram } from "../src";
-// import { expect } from "chai";
+import { BN, Program } from "@coral-xyz/anchor";
+import { ComputeBudgetProgram, Keypair, Transaction } from "@solana/web3.js";
+import { assert } from "chai";
+import { AnchorSola, ProfileProgram, RegisterParams, wait } from "../src";
 import * as pda from "../src/addresses";
 import * as registry from "../src/registry";
-import { assert } from "chai";
 
 describe("anchor_sola", () => {
   // Configure the client to use the local cluster.
@@ -19,10 +12,16 @@ describe("anchor_sola", () => {
 
   const wallet = anchor.Wallet.local();
   const defaultDispatcher = Keypair.generate();
-
   const program = anchor.workspace.AnchorSola as Program<AnchorSola>;
 
   const profileProgram = new ProfileProgram(program);
+  let global: {
+    counter: BN;
+    classCounter: BN;
+    owner: anchor.web3.PublicKey;
+    chainid: BN;
+    baseUri: string;
+  };
 
   before("airdrop", async () => {
     const res = await program.provider.connection.requestAirdrop(
@@ -52,7 +51,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -60,7 +59,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
     console.log("init global:", global);
@@ -85,7 +84,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -116,7 +115,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -124,7 +123,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
     console.log("update global:", global);
@@ -134,10 +133,10 @@ describe("anchor_sola", () => {
 
   it("mint a group profile", async () => {
     const test_profile_owner = Keypair.generate();
-    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
-    const profileId = oldGlobal.counter;
+    const profileId = global.counter;
     const params = {
       name: "MyGroupProfile",
       creators: [
@@ -172,7 +171,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -180,7 +179,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
     console.log("update global:", global);
@@ -202,10 +201,10 @@ describe("anchor_sola", () => {
 
   it("mint a default profile", async () => {
     const test_profile_owner = Keypair.generate();
-    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
-    const profileId = oldGlobal.counter;
+    const profileId = global.counter;
     const params = {
       name: "MyDefaultProfile",
       creators: [
@@ -240,7 +239,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -248,7 +247,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
     console.log("update global:", global);
@@ -273,11 +272,11 @@ describe("anchor_sola", () => {
   });
 
   it("set default dispatcher", async () => {
-    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
 
-    const profileId = oldGlobal.counter;
+    const profileId = global.counter;
     const params = {
       name: "MyDispatcher",
       creators: [
@@ -316,7 +315,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -324,7 +323,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
     console.log("update global:", global);
@@ -389,11 +388,12 @@ describe("anchor_sola", () => {
 
     console.log("Minting transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
-    const profileId = (
-      await program.account.solaProfileGlobal.fetch(pda.solaProfileGlobal()[0])
-    ).counter.sub(new BN(1));
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const profileId = global.counter.sub(new BN(1));
     const burnIx = await profileProgram.burnProfile(
       profileId,
       test_profile_owner
@@ -413,7 +413,7 @@ describe("anchor_sola", () => {
 
     console.log("Burning transaction signature:", burnTx);
 
-    await wait(1000);
+    await wait(200);
 
     // Verify that the profile was burned
 
@@ -427,12 +427,12 @@ describe("anchor_sola", () => {
   });
 
   it("set dispatcher", async () => {
-    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
 
     const dispatcher = Keypair.generate();
-    const profileId = oldGlobal.counter;
+    const profileId = global.counter;
     const params = {
       name: "MyDispatcher",
       creators: [
@@ -476,7 +476,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -484,7 +484,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
     console.log("update global:", global);
@@ -514,14 +514,14 @@ describe("anchor_sola", () => {
   });
 
   it("set group controller", async () => {
-    const oldGlobal = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
 
     const dispatcher = Keypair.generate();
     const owner = Keypair.generate();
 
-    const profileId = oldGlobal.counter;
+    const profileId = global.counter;
     const params = {
       name: "MyDispatcher",
       creators: [
@@ -555,7 +555,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction signature:", tx);
 
-    await wait(1000);
+    await wait(200);
 
     const res = await anchor
       .getProvider()
@@ -563,7 +563,7 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    const global = await program.account.solaProfileGlobal.fetch(
+    global = await program.account.solaProfileGlobal.fetch(
       pda.solaProfileGlobal()[0]
     );
     console.log("update global:", global);
@@ -612,7 +612,7 @@ describe("anchor_sola", () => {
       { skipPreflight: true }
     );
 
-    await wait(1000);
+    await wait(200);
 
     const fetchOtherController = await program.account.groupController.fetch(
       pda.groupController(mint.masterMint, otherController.publicKey)[0]
@@ -641,7 +641,7 @@ describe("anchor_sola", () => {
       { skipPreflight: true }
     );
 
-    await wait(1000);
+    await wait(200);
 
     const userDispatcher = await program.account.dispatcher.fetch(
       pda.dispatcher(mint.masterMint)[0]
@@ -674,7 +674,7 @@ describe("anchor_sola", () => {
       { skipPreflight: true }
     );
 
-    await wait(1000);
+    await wait(200);
 
     const fetchController = await program.account.groupController.fetch(
       pda.groupController(mint.masterMint, controller.publicKey)[0]
@@ -709,7 +709,7 @@ describe("anchor_sola", () => {
       { skipPreflight: true }
     );
 
-    await wait(1000);
+    await wait(200);
 
     const fetchNewController = await program.account.groupController.fetch(
       pda.groupController(mint.masterMint, newController.publicKey)[0]
@@ -748,6 +748,336 @@ describe("anchor_sola", () => {
     } catch (error) {
       console.log("Default dispatcher no perssion:", error);
     }
+  });
+
+  it("registers a class", async () => {
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const classId = global.classCounter;
+    const profileId = global.counter;
+    const owner = Keypair.generate();
+    const mintControllerIx = await profileProgram.mintGroupProfile(
+      {
+        name: "test class controller",
+        symbol: "TCC",
+        uri: "www.example.tcc",
+        isMutable: true,
+        creators: [
+          {
+            address: wallet.publicKey,
+            share: 100,
+          },
+        ],
+        curator: wallet.publicKey,
+        sellerFeeBasisPoints: 0,
+      },
+      wallet.payer,
+      owner.publicKey
+    );
+    const registerIx = await profileProgram.register(
+      classId,
+      profileId,
+      {
+        fungible: false,
+        transferable: true,
+        revocable: false,
+        address: owner.publicKey,
+        schema: "my test badge schema",
+      },
+      wallet.payer
+    );
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintControllerIx)
+        .add(registerIx),
+      [wallet.payer],
+      { skipPreflight: true }
+    );
+
+    await wait(200);
+    const tokenClass = await program.account.tokenClass.fetch(
+      pda.tokenClass(classId)[0]
+    );
+    assert(tokenClass.address.equals(owner.publicKey));
+    assert(tokenClass.schema == "my test badge schema");
+    assert(tokenClass.controller.eq(profileId));
+    assert(tokenClass.fungible == false);
+    assert(tokenClass.transferable == true);
+    assert(tokenClass.revocable == false);
+
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
+  });
+
+  it("set token class state", async () => {
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const classId = global.classCounter;
+    const profileId = global.counter;
+    const owner = Keypair.generate();
+    const mintControllerIx = await profileProgram.mintGroupProfile(
+      {
+        name: "test class controller",
+        symbol: "TCC",
+        uri: "www.example.tcc",
+        isMutable: true,
+        creators: [
+          {
+            address: wallet.publicKey,
+            share: 100,
+          },
+        ],
+        curator: wallet.publicKey,
+        sellerFeeBasisPoints: 0,
+      },
+      wallet.payer,
+      owner.publicKey
+    );
+    const registerIx = await profileProgram.register(
+      classId,
+      profileId,
+      {
+        fungible: false,
+        transferable: true,
+        revocable: false,
+        address: owner.publicKey,
+        schema: "my test badge schema",
+      },
+      wallet.payer
+    );
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintControllerIx)
+        .add(registerIx),
+      [wallet.payer],
+      { skipPreflight: true }
+    );
+
+    await wait(200);
+    const tokenClass = await program.account.tokenClass.fetch(
+      pda.tokenClass(classId)[0]
+    );
+    assert(tokenClass.address.equals(owner.publicKey));
+    assert(tokenClass.schema == "my test badge schema");
+    assert(tokenClass.controller.eq(profileId));
+    assert(tokenClass.fungible == false);
+    assert(tokenClass.transferable == true);
+    assert(tokenClass.revocable == false);
+
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
+
+    console.log("owner set token class state");
+
+    const controller = Keypair.generate();
+    const setTokenClassStateIx = await profileProgram.setTokenClassState(
+      classId,
+      { isIssuer: true, isConsumer: true },
+      wallet.payer,
+      controller.publicKey,
+      owner
+    );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(setTokenClassStateIx),
+      [wallet.payer, owner],
+      { skipPreflight: true }
+    );
+
+    const ownerSetTokenClassState = await program.account.tokenClassState.fetch(
+      pda.tokenClassState(pda.tokenClass(classId)[0], controller.publicKey)[0]
+    );
+
+    assert(ownerSetTokenClassState.isIssuer == true);
+    assert(ownerSetTokenClassState.isConsumer == true);
+
+    console.log("default dispatcher can set token class state");
+    const dispatcherSetTokenClassStateIx =
+      await profileProgram.setTokenClassState(
+        classId,
+        { isIssuer: false, isConsumer: true },
+        wallet.payer,
+        controller.publicKey,
+        defaultDispatcher
+      );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(dispatcherSetTokenClassStateIx),
+      [wallet.payer, defaultDispatcher],
+      { skipPreflight: true }
+    );
+
+    const dispatcherSetTokenClassState =
+      await program.account.tokenClassState.fetch(
+        pda.tokenClassState(pda.tokenClass(classId)[0], controller.publicKey)[0]
+      );
+
+    assert(dispatcherSetTokenClassState.isIssuer == false);
+    assert(dispatcherSetTokenClassState.isConsumer == true);
+  });
+
+  it("set class generic", async () => {
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const classId = global.classCounter;
+    const profileId = global.counter;
+    const owner = Keypair.generate();
+    const mintControllerIx = await profileProgram.mintGroupProfile(
+      {
+        name: "test class controller",
+        symbol: "TCC",
+        uri: "www.example.tcc",
+        isMutable: true,
+        creators: [
+          {
+            address: wallet.publicKey,
+            share: 100,
+          },
+        ],
+        curator: wallet.publicKey,
+        sellerFeeBasisPoints: 0,
+      },
+      wallet.payer,
+      owner.publicKey
+    );
+    const registerIx = await profileProgram.register(
+      classId,
+      profileId,
+      {
+        fungible: false,
+        transferable: true,
+        revocable: false,
+        address: owner.publicKey,
+        schema: "my test badge schema",
+      },
+      wallet.payer
+    );
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintControllerIx)
+        .add(registerIx),
+      [wallet.payer],
+      { skipPreflight: true }
+    );
+
+    await wait(200);
+    const tokenClass = await program.account.tokenClass.fetch(
+      pda.tokenClass(classId)[0]
+    );
+    assert(tokenClass.address.equals(owner.publicKey));
+    assert(tokenClass.schema == "my test badge schema");
+    assert(tokenClass.controller.eq(profileId));
+    assert(tokenClass.fungible == false);
+    assert(tokenClass.transferable == true);
+    assert(tokenClass.revocable == false);
+
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
+
+    console.log("owner set class generic");
+
+    const setClassGenericIx = await profileProgram.setClassGeneric(
+      classId,
+      { isGenericBadgeClass: true, isLineageBadgeClass: true },
+      wallet.payer,
+      owner
+    );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(setClassGenericIx),
+      [wallet.payer, owner],
+      { skipPreflight: true }
+    );
+
+    const ownerSetClassGeneric = await program.account.classGeneric.fetch(
+      pda.classGeneric(pda.tokenClass(classId)[0])[0]
+    );
+
+    assert(ownerSetClassGeneric.isGenericBadgeClass == true);
+    assert(ownerSetClassGeneric.isLineageBadgeClass == true);
+
+    console.log("default dispatcher can set class generic");
+    const dispatcherSetClassGenericIx = await profileProgram.setClassGeneric(
+      classId,
+      { isGenericBadgeClass: false, isLineageBadgeClass: true },
+      wallet.payer,
+      defaultDispatcher
+    );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(dispatcherSetClassGenericIx),
+      [wallet.payer, defaultDispatcher],
+      { skipPreflight: true }
+    );
+
+    const dispatcherSetClassGeneric = await program.account.classGeneric.fetch(
+      pda.classGeneric(pda.tokenClass(classId)[0])[0]
+    );
+
+    assert(dispatcherSetClassGeneric.isGenericBadgeClass == false);
+    assert(dispatcherSetClassGeneric.isLineageBadgeClass == true);
+
+    console.log("group manager can set class generic");
+
+    const controller = Keypair.generate();
+    const setGroupControllerIx = await profileProgram.setGroupController(
+      profileId,
+      wallet.payer,
+      controller.publicKey,
+      { isManager: true, isIssuer: false, isMember: false },
+      owner
+    );
+    const groupManagerSetClassGenericIx = await profileProgram.setClassGeneric(
+      classId,
+      { isGenericBadgeClass: true, isLineageBadgeClass: false },
+      wallet.payer,
+      controller
+    );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(setGroupControllerIx)
+        .add(groupManagerSetClassGenericIx),
+      [wallet.payer, owner, controller],
+      { skipPreflight: true }
+    );
+
+    const groupManagerSetClassGeneric =
+      await program.account.classGeneric.fetch(
+        pda.classGeneric(pda.tokenClass(classId)[0])[0]
+      );
+
+    assert(groupManagerSetClassGeneric.isGenericBadgeClass == true);
+    assert(groupManagerSetClassGeneric.isLineageBadgeClass == false);
   });
 
   // Add more tests as needed

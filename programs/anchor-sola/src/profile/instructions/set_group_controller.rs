@@ -19,7 +19,7 @@ pub struct SetGroupController<'info> {
     )]
     pub master_mint: UncheckedAccount<'info>,
     /// CHECK:
-    pub master_token: Option<UncheckedAccount<'info>>,
+    pub master_token: UncheckedAccount<'info>,
     /// CHECK:
     #[account(
         seeds = [
@@ -74,7 +74,7 @@ pub fn handle_set_group_controller(
 ) -> Result<()> {
     require!(
         is_owner(
-            ctx.accounts.master_token.as_ref(),
+            &ctx.accounts.master_token,
             &ctx.accounts.authority,
             ctx.accounts.master_mint.as_ref(),
             &ctx.accounts.token_program,

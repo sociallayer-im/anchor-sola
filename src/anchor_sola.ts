@@ -616,7 +616,7 @@ export type AnchorSola = {
       accounts: [
         {
           name: "masterMint";
-          isMut: true;
+          isMut: false;
           isSigner: false;
         },
         {
@@ -1303,10 +1303,6 @@ export type AnchorSola = {
           {
             name: "schema";
             type: "string";
-          },
-          {
-            name: "controller";
-            type: "u64";
           }
         ];
       };
@@ -2067,7 +2063,7 @@ export const IDL: AnchorSola = {
       accounts: [
         {
           name: "masterMint",
-          isMut: true,
+          isMut: false,
           isSigner: false,
         },
         {
@@ -2754,10 +2750,6 @@ export const IDL: AnchorSola = {
           {
             name: "schema",
             type: "string",
-          },
-          {
-            name: "controller",
-            type: "u64",
           },
         ],
       },
