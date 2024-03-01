@@ -2,10 +2,12 @@ use std::ops::Deref;
 
 use anchor_lang::{
     prelude::*,
-    solana_program::{program::invoke, system_program},
+    solana_program::{
+        program::{invoke, invoke_signed},
+        system_instruction, system_program,
+    },
 };
 use anchor_spl::token_2022::{
-    initialize_mint_close_authority,
     spl_token_2022::{
         self,
         extension::{metadata_pointer, BaseStateWithExtensions, ExtensionType},
@@ -105,8 +107,7 @@ pub fn create_non_transferable_mint<
     token_standard: TokenStandard,
     decimals: Option<u8>,
     spl_token_program: &'ref_info Program<'info, Token2022>,
-    system_program: &'ref_info Program<'info, System>,
-    mint_seeds: &'ref_info [&'ref_info [u8]],
+    mint_seeds: &'ref_info [&'ref_info [&'ref_info [u8]]],
 ) -> Result<()> {
     let mint_account_size = ExtensionType::try_calculate_account_len::<Mint>(&[
         ExtensionType::MintCloseAuthority,
@@ -114,27 +115,18 @@ pub fn create_non_transferable_mint<
         ExtensionType::NonTransferable,
     ])?;
 
-    let cpi_accounts = anchor_lang::system_program::CreateAccount {
-        from: payer.to_account_info(),
-        to: mint.to_account_info(),
-    };
-    let cpi_context =
-        anchor_lang::context::CpiContext::new(system_program.to_account_info(), cpi_accounts);
+    msg!("will create account");
 
-    anchor_lang::system_program::create_account(
-        cpi_context.with_signer(&[&mint_seeds]),
-        Rent::get()?.minimum_balance(mint_account_size),
-        mint_account_size as u64,
-        spl_token_program.key,
-    )?;
-
-    let cpi_accounts = anchor_spl::token_2022::InitializeMintCloseAuthority {
-        mint: mint.to_account_info(),
-    };
-
-    initialize_mint_close_authority(
-        CpiContext::new(spl_token_program.to_account_info(), cpi_accounts),
-        Some(&metadata.key()),
+    invoke_signed(
+        &system_instruction::create_account(
+            payer.key,
+            mint.key,
+            Rent::get()?.minimum_balance(mint_account_size),
+            mint_account_size as u64,
+            spl_token_program.key,
+        ),
+        &[payer.to_account_info(), mint.to_account_info()],
+        mint_seeds,
     )?;
 
     let account_infos = vec![
@@ -143,6 +135,19 @@ pub fn create_non_transferable_mint<
         spl_token_program.to_account_info(),
     ];
 
+    msg!("will initialize_mint_close_authority.");
+
+    invoke(
+        &spl_token_2022::instruction::initialize_mint_close_authority(
+            spl_token_program.key,
+            mint.key,
+            Some(metadata.key),
+        )?,
+        &account_infos,
+    )?;
+
+    msg!("will initialize_non_transferable_mint.");
+
     invoke(
         &spl_token_2022::instruction::initialize_non_transferable_mint(
             spl_token_program.key,
@@ -150,6 +155,7 @@ pub fn create_non_transferable_mint<
         )?,
         &[mint.to_account_info(), spl_token_program.to_account_info()],
     )?;
+    msg!("will initialize.");
 
     invoke(
         &metadata_pointer::instruction::initialize(
@@ -176,6 +182,7 @@ pub fn create_non_transferable_mint<
             return Err(SolaError::InvalidTokenStandard.into());
         }
     };
+    msg!("will initialize_mint2.");
 
     // initializing the mint account
     invoke(
@@ -188,7 +195,7 @@ pub fn create_non_transferable_mint<
         )?,
         &[mint.to_account_info(), authority.to_account_info()],
     )?;
-
+    msg!("create non transferable mint ok.");
     Ok(())
 }
 

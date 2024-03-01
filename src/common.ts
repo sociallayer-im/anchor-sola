@@ -17,22 +17,9 @@ export interface CreatorsParam {
   share: number;
 }
 
-export interface CreateSolaParams {
-  creators: CreatorsParam[];
-  curator: PublicKey;
-  sellerFeeBasisPoints: number;
-  symbol: string;
-  uri: string;
-  isBurnable: boolean;
-  isMutable: boolean;
-  updateAuthorityIsSigner: boolean;
-  updatePrimarySaleHappenedViaToken: boolean;
-}
-
 export interface MintProfileParams {
   name: string;
   creators: CreatorsParam[];
-  curator: PublicKey;
   sellerFeeBasisPoints: number;
   symbol: string;
   uri: string;
@@ -66,7 +53,6 @@ export interface SetTokenClassStateParams {
 export interface MintBadgeParams {
   name: string;
   creators: CreatorsParam[];
-  curator: PublicKey | null;
   sellerFeeBasisPoints: number;
   symbol: string;
   uri: string;

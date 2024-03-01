@@ -189,7 +189,6 @@ pub struct MintBadge<'info> {
 pub struct MintBadgeParams {
     pub name: String,
     pub creators: Vec<CreatorsParam>,
-    pub curator: Option<Pubkey>,
     pub seller_fee_basis_points: u16,
     pub symbol: String,
     pub uri: String,
@@ -264,8 +263,7 @@ pub fn mint_badge_handler(
             mpl_token_metadata::types::TokenStandard::ProgrammableNonFungible,
             None,
             &accounts.token_program,
-            &accounts.system_program,
-            &accounts.badge_state.as_seeds(),
+            &[&accounts.badge_state.mint_seeds()[..]],
         )?;
     }
 
@@ -283,17 +281,19 @@ pub fn mint_badge_handler(
 }
 
 fn initialize(accounts: &mut MintBadge<'_>, params: MintBadgeParams) -> Result<()> {
-    let creators = Some(
-        params
-            .creators
-            .iter()
-            .map(|c| Creator {
-                address: c.address,
-                share: c.share,
-                verified: false,
-            })
-            .collect::<Vec<_>>(),
-    );
+    let creators = None::<()>
+        .map(|_| {
+            params
+                .creators
+                .iter()
+                .map(|c| Creator {
+                    address: c.address,
+                    share: c.share,
+                    verified: false,
+                })
+                .collect::<Vec<_>>()
+        })
+        .filter(|creators| !creators.is_empty());
     let metadata_program = accounts.metadata_program.to_account_info();
     let master_metadata = accounts.master_metadata.to_account_info();
     let master_edition = accounts.master_edition.to_account_info();

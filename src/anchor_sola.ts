@@ -102,7 +102,6 @@ export type AnchorSola = {
           name: "profileToken";
           isMut: false;
           isSigner: false;
-          isOptional: true;
         },
         {
           name: "dispatcher";
@@ -623,7 +622,6 @@ export type AnchorSola = {
           name: "masterToken";
           isMut: false;
           isSigner: false;
-          isOptional: true;
         },
         {
           name: "dispatcher";
@@ -701,7 +699,6 @@ export type AnchorSola = {
           name: "masterToken";
           isMut: false;
           isSigner: false;
-          isOptional: true;
         },
         {
           name: "dispatcher";
@@ -779,7 +776,6 @@ export type AnchorSola = {
           name: "masterToken";
           isMut: false;
           isSigner: false;
-          isOptional: true;
         },
         {
           name: "dispatcher";
@@ -1118,7 +1114,7 @@ export type AnchorSola = {
     },
     {
       name: "groupController";
-      docs: ['seeds: "group_controller" + profile_mint'];
+      docs: ['seeds: "group_controller" + profile_mint + controller'];
       type: {
         kind: "struct";
         fields: [
@@ -1205,12 +1201,6 @@ export type AnchorSola = {
             };
           },
           {
-            name: "curator";
-            type: {
-              option: "publicKey";
-            };
-          },
-          {
             name: "sellerFeeBasisPoints";
             type: "u16";
           },
@@ -1252,12 +1242,6 @@ export type AnchorSola = {
               vec: {
                 defined: "CreatorsParam";
               };
-            };
-          },
-          {
-            name: "curator";
-            type: {
-              option: "publicKey";
             };
           },
           {
@@ -1549,7 +1533,6 @@ export const IDL: AnchorSola = {
           name: "profileToken",
           isMut: false,
           isSigner: false,
-          isOptional: true,
         },
         {
           name: "dispatcher",
@@ -2070,7 +2053,6 @@ export const IDL: AnchorSola = {
           name: "masterToken",
           isMut: false,
           isSigner: false,
-          isOptional: true,
         },
         {
           name: "dispatcher",
@@ -2148,7 +2130,6 @@ export const IDL: AnchorSola = {
           name: "masterToken",
           isMut: false,
           isSigner: false,
-          isOptional: true,
         },
         {
           name: "dispatcher",
@@ -2226,7 +2207,6 @@ export const IDL: AnchorSola = {
           name: "masterToken",
           isMut: false,
           isSigner: false,
-          isOptional: true,
         },
         {
           name: "dispatcher",
@@ -2565,7 +2545,7 @@ export const IDL: AnchorSola = {
     },
     {
       name: "groupController",
-      docs: ['seeds: "group_controller" + profile_mint'],
+      docs: ['seeds: "group_controller" + profile_mint + controller'],
       type: {
         kind: "struct",
         fields: [
@@ -2652,12 +2632,6 @@ export const IDL: AnchorSola = {
             },
           },
           {
-            name: "curator",
-            type: {
-              option: "publicKey",
-            },
-          },
-          {
             name: "sellerFeeBasisPoints",
             type: "u16",
           },
@@ -2699,12 +2673,6 @@ export const IDL: AnchorSola = {
               vec: {
                 defined: "CreatorsParam",
               },
-            },
-          },
-          {
-            name: "curator",
-            type: {
-              option: "publicKey",
             },
           },
           {

@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { BN, Program } from "@coral-xyz/anchor";
 import { ComputeBudgetProgram, Keypair, Transaction } from "@solana/web3.js";
 import { assert } from "chai";
-import { AnchorSola, ProfileProgram, RegisterParams, wait } from "../src";
+import { AnchorSola, BadgeProgram, ProfileProgram, wait } from "../src";
 import * as pda from "../src/addresses";
 import * as registry from "../src/registry";
 
@@ -769,7 +769,6 @@ describe("anchor_sola", () => {
             share: 100,
           },
         ],
-        curator: wallet.publicKey,
         sellerFeeBasisPoints: 0,
       },
       wallet.payer,
@@ -833,7 +832,6 @@ describe("anchor_sola", () => {
             share: 100,
           },
         ],
-        curator: wallet.publicKey,
         sellerFeeBasisPoints: 0,
       },
       wallet.payer,
@@ -951,7 +949,6 @@ describe("anchor_sola", () => {
             share: 100,
           },
         ],
-        curator: wallet.publicKey,
         sellerFeeBasisPoints: 0,
       },
       wallet.payer,
@@ -1078,6 +1075,278 @@ describe("anchor_sola", () => {
 
     assert(groupManagerSetClassGeneric.isGenericBadgeClass == true);
     assert(groupManagerSetClassGeneric.isLineageBadgeClass == false);
+  });
+
+  const badgeProgram = new BadgeProgram(program);
+  const badgeOwner = Keypair.generate();
+  let badgeGlobal: {
+    owner: anchor.web3.PublicKey;
+    baseUri: string;
+    counter: anchor.BN;
+  };
+
+  it("init badge", async () => {
+    const ix = await badgeProgram.initializeeBadgeGlobal(
+      "https://example.com/my-badge.json",
+      wallet.payer,
+      badgeOwner.publicKey
+    );
+
+    await anchor
+      .getProvider()
+      .sendAndConfirm(new Transaction().add(ix), [], { skipPreflight: true });
+
+    await wait(200);
+
+    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
+
+    console.log("init badge global:", global);
+
+    assert(badgeGlobal.baseUri == "https://example.com/my-badge.json");
+    assert(badgeGlobal.owner.equals(badgeOwner.publicKey));
+    assert(badgeGlobal.counter.eq(new anchor.BN(1)));
+  });
+
+  it("mint badge", async () => {
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const classId = global.classCounter;
+    const profileId = global.counter;
+    const tokenClassOwner = Keypair.generate();
+    const mintControllerIx = await profileProgram.mintGroupProfile(
+      {
+        name: "test class controller",
+        symbol: "TCC",
+        uri: "www.example.tcc",
+        isMutable: true,
+        creators: [
+          {
+            address: wallet.publicKey,
+            share: 100,
+          },
+        ],
+        sellerFeeBasisPoints: 0,
+      },
+      wallet.payer,
+      tokenClassOwner.publicKey
+    );
+    const registerIx = await profileProgram.register(
+      classId,
+      profileId,
+      {
+        fungible: false,
+        transferable: true,
+        revocable: false,
+        address: tokenClassOwner.publicKey,
+        schema: "my test badge schema",
+      },
+      wallet.payer
+    );
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintControllerIx)
+        .add(registerIx),
+      [wallet.payer],
+      { skipPreflight: true }
+    );
+
+    await wait(200);
+    const tokenClass = await program.account.tokenClass.fetch(
+      pda.tokenClass(classId)[0]
+    );
+    assert(tokenClass.address.equals(tokenClassOwner.publicKey));
+    assert(tokenClass.schema == "my test badge schema");
+    assert(tokenClass.controller.eq(profileId));
+    assert(tokenClass.fungible == false);
+    assert(tokenClass.transferable == true);
+    assert(tokenClass.revocable == false);
+
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
+
+    console.log("mint transferable badge without data");
+
+    const myBadgeOwner = Keypair.generate();
+    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
+
+    const badgeId = badgeGlobal.counter;
+    const mintBadgeIx = await badgeProgram.mintBadge(
+      classId,
+      {
+        name: "testBadge",
+        // TODO:
+        // 不知道为什么，设置为空的时候，anchor识别不到整个instructions
+        creators: [
+          {
+            address: wallet.publicKey,
+            share: 100,
+          },
+        ],
+        sellerFeeBasisPoints: 0,
+        symbol: "hi",
+        uri: "www.example.badge",
+        isMutable: true,
+        weights: new anchor.BN(0),
+        schema: "testSchema",
+      },
+      wallet.payer,
+      myBadgeOwner.publicKey,
+      tokenClassOwner
+    );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintBadgeIx),
+      [wallet.payer, tokenClassOwner],
+      { skipPreflight: true }
+    );
+
+    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
+    assert(badgeGlobal.counter.eq(badgeId.add(new anchor.BN(1))));
+
+    const badgeMint = new registry.Mint(
+      pda.mintBadge(badgeId)[0],
+      myBadgeOwner.publicKey
+    );
+    const badgeState = await program.account.badgeState.fetch(
+      pda.badgeState(badgeMint.masterMint)[0]
+    );
+
+    assert(new BN(badgeState.badgeId, 10, "be").eq(badgeId));
+    assert(badgeState.masterEdition.equals(badgeMint.masterEdition));
+    assert(badgeState.masterMint.equals(badgeMint.masterMint));
+    assert(badgeState.masterMetadata.equals(badgeMint.masterMetadata));
+    assert(badgeState.weights.eq(new anchor.BN(0)));
+    assert(badgeState.metatable.eq(classId));
+    assert(badgeState.tokenSchema == "testSchema");
+  });
+
+  it("mint nonTransferable badge", async () => {
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    const classId = global.classCounter;
+    const profileId = global.counter;
+    const tokenClassOwner = Keypair.generate();
+    const mintControllerIx = await profileProgram.mintGroupProfile(
+      {
+        name: "test class controller",
+        symbol: "TCC",
+        uri: "www.example.tcc",
+        isMutable: true,
+        creators: [
+          {
+            address: wallet.publicKey,
+            share: 100,
+          },
+        ],
+        sellerFeeBasisPoints: 0,
+      },
+      wallet.payer,
+      tokenClassOwner.publicKey
+    );
+    const registerIx = await profileProgram.register(
+      classId,
+      profileId,
+      {
+        fungible: false,
+        transferable: false,
+        revocable: false,
+        address: tokenClassOwner.publicKey,
+        schema: "my test badge schema",
+      },
+      wallet.payer
+    );
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintControllerIx)
+        .add(registerIx),
+      [wallet.payer],
+      { skipPreflight: true }
+    );
+
+    await wait(200);
+    const tokenClass = await program.account.tokenClass.fetch(
+      pda.tokenClass(classId)[0]
+    );
+    assert(tokenClass.address.equals(tokenClassOwner.publicKey));
+    assert(tokenClass.schema == "my test badge schema");
+    assert(tokenClass.controller.eq(profileId));
+    assert(tokenClass.fungible == false);
+    assert(tokenClass.transferable == false);
+    assert(tokenClass.revocable == false);
+
+    global = await program.account.solaProfileGlobal.fetch(
+      pda.solaProfileGlobal()[0]
+    );
+    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
+
+    console.log("mint transferable badge without data");
+
+    const myBadgeOwner = Keypair.generate();
+    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
+
+    const badgeId = badgeGlobal.counter;
+    const mintBadgeIx = await badgeProgram.mintBadge(
+      classId,
+      {
+        name: "testBadge",
+        // TODO:
+        // 不知道为什么，设置为空的时候，anchor识别不到整个instructions
+        creators: [
+          {
+            address: wallet.publicKey,
+            share: 100,
+          },
+        ],
+        sellerFeeBasisPoints: 0,
+        symbol: "hi",
+        uri: "www.example.badge",
+        isMutable: true,
+        weights: new anchor.BN(0),
+        schema: "testSchema",
+      },
+      wallet.payer,
+      myBadgeOwner.publicKey,
+      tokenClassOwner
+    );
+
+    await anchor.getProvider().sendAndConfirm(
+      new Transaction()
+        // 加钱！！！
+        .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
+        .add(mintBadgeIx),
+      [wallet.payer, tokenClassOwner],
+      { skipPreflight: true }
+    );
+
+    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
+    assert(badgeGlobal.counter.eq(badgeId.add(new anchor.BN(1))));
+
+    const badgeMint = new registry.Mint(
+      pda.mintBadge(badgeId)[0],
+      myBadgeOwner.publicKey
+    );
+    const badgeState = await program.account.badgeState.fetch(
+      pda.badgeState(badgeMint.masterMint)[0]
+    );
+
+    assert(new BN(badgeState.badgeId, 10, "be").eq(badgeId));
+    assert(badgeState.masterEdition.equals(badgeMint.masterEdition));
+    assert(badgeState.masterMint.equals(badgeMint.masterMint));
+    assert(badgeState.masterMetadata.equals(badgeMint.masterMetadata));
+    assert(badgeState.weights.eq(new anchor.BN(0)));
+    assert(badgeState.metatable.eq(classId));
+    assert(badgeState.tokenSchema == "testSchema");
   });
 
   // Add more tests as needed

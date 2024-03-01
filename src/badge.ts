@@ -48,7 +48,7 @@ export class BadgeProgram {
       [],
       payer,
       to,
-      publisher,
+      publisher ? publisher : payer,
       null,
       null
     );
@@ -69,8 +69,11 @@ export class BadgeProgram {
       .counter;
     const badgeMint = pda.mintBadge(badgeId)[0];
     const mint = new Mint(badgeMint, to);
-    const register = new IRegistry(this.program, classId);
-    const registerMint = new Mint(register.profileMint, publisher ? publisher.publicKey : payer.publicKey);
+    const register = await IRegistry.new(this.program, classId);
+    const registerMint = new Mint(
+      register.profileMint,
+      publisher ? publisher.publicKey : payer.publicKey
+    );
     return this.program.methods
       .mintBadge(classId, params, origins)
       .accounts({
@@ -122,7 +125,7 @@ export class BadgeProgram {
       origins,
       payer,
       to,
-      publisher,
+      publisher ? publisher : payer,
       undefined,
       null
     );
@@ -142,7 +145,7 @@ export class BadgeProgram {
       [genericOrigins],
       payer,
       to,
-      publisher,
+      publisher ? publisher : payer,
       null,
       undefined
     );
