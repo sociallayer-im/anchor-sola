@@ -2,7 +2,7 @@ import { PublicKey } from "@solana/web3.js";
 import * as anchor from "@coral-xyz/anchor";
 
 export const PROGRAM_ID = new PublicKey(
-  "13QsVLZkzf9gRiFbFrUK9xhLa6QukFEdLxJUfbuta33L"
+  "7UYNekL1ASR39gd2wtrk7Ne1RUhQYUCEBUMLfayTbtmm"
 );
 
 export const MPL_TOKEN_METADATA_PROGRAM_ID = new PublicKey(

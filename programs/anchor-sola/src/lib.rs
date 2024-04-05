@@ -7,7 +7,15 @@ use profile::*;
 
 use badge::instructions::*;
 
-declare_id!("13QsVLZkzf9gRiFbFrUK9xhLa6QukFEdLxJUfbuta33L");
+pub use badge::instructions::MintBadgeParams;
+pub use badge::state::*;
+pub use profile::{
+    MintProfileParams, RegisterParams, SetClassGenericParams, SetGroupControllerParams,
+    SetTokenClassStateParams,
+};
+pub use state::*;
+
+declare_id!("7UYNekL1ASR39gd2wtrk7Ne1RUhQYUCEBUMLfayTbtmm");
 
 #[program]
 pub mod anchor_sola {
