@@ -9,7 +9,6 @@ pub struct BadgeGlobal {
     pub owner: Pubkey,
     #[max_len(MAX_URI_LENGTH)]
     pub base_uri: String,
-    pub counter: u64,
 }
 
 /// seeds: "badge_state" + badge_mint

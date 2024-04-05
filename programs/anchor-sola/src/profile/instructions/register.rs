@@ -1,18 +1,9 @@
-use crate::{SolaProfileGlobal, TokenClass, TOKEN_SCHEMA_MAX_LEN};
+use crate::{TokenClass, TOKEN_SCHEMA_MAX_LEN};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 #[instruction(class_id: u64)]
 pub struct Register<'info> {
-    #[account(
-        mut,
-        seeds = [
-            "sola_profile_global".as_bytes()
-        ],
-        bump,
-        constraint = sola_profile_global.class_counter == class_id
-    )]
-    pub sola_profile_global: Account<'info, SolaProfileGlobal>,
     #[account(
         init,
         payer = payer,
@@ -58,8 +49,6 @@ pub fn handle_register(
         transferable: params.transferable,
         revocable: params.revocable,
     };
-
-    ctx.accounts.sola_profile_global.class_counter += 1;
 
     Ok(())
 }

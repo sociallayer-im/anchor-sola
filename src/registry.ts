@@ -14,23 +14,13 @@ export class IRegistry {
   defaultDispatcher: web3.PublicKey;
   classGeneric: web3.PublicKey;
 
-  public static async new(
-    program: anchor.Program<AnchorSola>,
-    classId: anchor.BN
-  ): Promise<IRegistry> {
-    const res = new IRegistry();
-    res.tokenClass = pda.tokenClass(classId)[0];
-    const controllerId = (
-      await program.account.tokenClass.fetch(res.tokenClass, "confirmed")
-    ).controller;
-    res.profileMint = pda.mintProfile(controllerId)[0];
-    res.dispatcher = pda.dispatcher(res.profileMint)[0];
-    res.defaultDispatcher = pda.defaultDispatcher()[0];
-    res.classGeneric = pda.classGeneric(res.tokenClass)[0];
-    return res;
+  constructor(classId: anchor.BN, controllerId: anchor.BN) {
+    this.tokenClass = pda.tokenClass(classId)[0];
+    this.profileMint = pda.mintProfile(controllerId)[0];
+    this.dispatcher = pda.dispatcher(this.profileMint)[0];
+    this.defaultDispatcher = pda.defaultDispatcher()[0];
+    this.classGeneric = pda.classGeneric(this.tokenClass)[0];
   }
-
-  constructor() {}
 }
 
 export class Mint {

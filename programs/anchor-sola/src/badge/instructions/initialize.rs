@@ -28,7 +28,6 @@ pub fn handle_initializee_badge_global(
     let global = &mut ctx.accounts.badge_global;
 
     **global = BadgeGlobal {
-        counter: 1,
         owner: ctx.accounts.owner.key(),
         base_uri: uri,
     };

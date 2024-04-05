@@ -9,8 +9,6 @@ use super::utils::{is_dispatcher, RefAccount};
 #[derive(InitSpace)]
 #[account]
 pub struct SolaProfileGlobal {
-    pub counter: u64,
-    pub class_counter: u64,
     pub owner: Pubkey,
     pub chainid: u64,
     #[max_len(MAX_URI_LENGTH)]
@@ -172,17 +170,17 @@ pub struct IRegistryRef<'info: 'ref_info, 'ref_info> {
     pub token_class: &'ref_info Account<'info, TokenClass>,
     /// CHECK:
     /// seeds: "mint_profile" + &token_class.controller.to_be_bytes()
-    pub profile_mint: &'ref_info UncheckedAccount<'info>,
+    pub profile_mint: &'ref_info AccountInfo<'info>,
     ///
-    pub profile_token: &'ref_info UncheckedAccount<'info>,
+    pub profile_token: &'ref_info AccountInfo<'info>,
     /// CHECK:
     /// seeds: "dispatcher" + master_mint.key().as_ref()
-    pub dispatcher: &'ref_info UncheckedAccount<'info>,
+    pub dispatcher: &'ref_info AccountInfo<'info>,
     /// seeds: "default_dispatcher"
     pub default_dispatcher: &'ref_info Account<'info, Dispatcher>,
     /// CHECK:
     /// seeds: "class_generic" + token_class.key().as_ref()
-    pub class_generic: &'ref_info UncheckedAccount<'info>,
+    pub class_generic: &'ref_info AccountInfo<'info>,
     pub spl_token_program: &'ref_info Program<'info, Token2022>,
 }
 
@@ -213,14 +211,14 @@ impl<'info: 'ref_info, 'ref_info> IRegistryRef<'info, 'ref_info> {
     }
 
     pub fn is_generic_badge_class(&self) -> bool {
-        let class_generic = RefAccount::<ClassGeneric>::new(&self.class_generic);
+        let class_generic = Box::new(RefAccount::<ClassGeneric>::new(&self.class_generic));
         class_generic
             .map(|inner| inner.is_generic_badge_class)
             .unwrap_or(false)
     }
 
     pub fn is_lineage_badge_class(&self) -> bool {
-        let class_generic = RefAccount::<ClassGeneric>::new(&self.class_generic);
+        let class_generic = Box::new(RefAccount::<ClassGeneric>::new(&self.class_generic));
         class_generic
             .map(|inner| inner.is_lineage_badge_class)
             .unwrap_or(false)

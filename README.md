@@ -21,6 +21,20 @@ Error: Function _ZN112_$LT$solana_program..instruction..InstructionError$u20$as$
 
 https://github.com/solana-labs/solana/pull/35038
 
+栈内存不够，使用Box进行堆内存分配
+
+解决方案：使用 Box Accounts： 
+
+https://docs.rs/anchor-lang/latest/anchor_lang/accounts/boxed/index.html
+
+```
+
+#[derive(Accounts)]
+pub struct Example {
+    pub my_acc: Box<Account<'info, MyData>>
+}
+```
+
 3.
 
 ```

@@ -21,7 +21,7 @@ use mpl_token_metadata::types::TokenStandard;
 use crate::{state::SolaError, Dispatcher, GroupController};
 
 pub fn is_owner(
-    master_token: &UncheckedAccount<'_>,
+    master_token: &AccountInfo<'_>,
     authority: &Signer<'_>,
     master_mint: &AccountInfo<'_>,
     spl_token_program: &Program<'_, Token2022>,
@@ -39,21 +39,23 @@ pub fn is_owner(
 }
 
 pub fn is_dispatcher<'info: 'ref_info, 'ref_info>(
-    dispatcher: &'ref_info UncheckedAccount<'info>,
+    dispatcher: &'ref_info AccountInfo<'info>,
     default_dispatcher: &'ref_info Account<'info, Dispatcher>,
     authority: &'ref_info Signer<'info>,
 ) -> bool {
-    let dispatcher = RefAccount::<Dispatcher>::new(dispatcher.as_ref());
+    let dispatcher = Box::new(RefAccount::<Dispatcher>::new(dispatcher.as_ref()));
     dispatcher
         .map(|inner| inner.dispatcher)
         .unwrap_or(default_dispatcher.dispatcher)
         == authority.key()
 }
 
-pub fn is_group_manager(group_controller: &UncheckedAccount<'_>) -> bool {
-    RefAccount::<GroupController>::new(group_controller.as_ref())
-        .map(|gp| gp.is_manager)
-        .unwrap_or(false)
+pub fn is_group_manager(group_controller: &AccountInfo<'_>) -> bool {
+    Box::new(RefAccount::<GroupController>::new(
+        group_controller.as_ref(),
+    ))
+    .map(|gp| gp.is_manager)
+    .unwrap_or(false)
 }
 
 #[derive(Clone)]
@@ -100,8 +102,8 @@ pub fn create_non_transferable_mint<
     'ref_info,
     T: AccountSerialize + AccountDeserialize + Owner + Clone,
 >(
-    mint: &'ref_info UncheckedAccount<'info>,
-    metadata: &'ref_info UncheckedAccount<'info>,
+    mint: &'ref_info AccountInfo<'info>,
+    metadata: &'ref_info AccountInfo<'info>,
     authority: &'ref_info Account<'info, T>,
     payer: &'ref_info Signer<'info>,
     token_standard: TokenStandard,

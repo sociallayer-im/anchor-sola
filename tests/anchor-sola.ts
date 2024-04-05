@@ -16,8 +16,6 @@ describe("anchor_sola", () => {
 
   const profileProgram = new ProfileProgram(program);
   let global: {
-    counter: BN;
-    classCounter: BN;
     owner: anchor.web3.PublicKey;
     chainid: BN;
     baseUri: string;
@@ -133,10 +131,7 @@ describe("anchor_sola", () => {
 
   it("mint a group profile", async () => {
     const test_profile_owner = Keypair.generate();
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const profileId = global.counter;
+    const profileId = new anchor.BN(1);
     const params = {
       name: "MyGroupProfile",
       creators: [
@@ -153,6 +148,7 @@ describe("anchor_sola", () => {
     };
 
     const ix = await profileProgram.mintGroupProfile(
+      profileId,
       params,
       wallet.payer,
       test_profile_owner.publicKey
@@ -179,11 +175,6 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    console.log("update global:", global);
-    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
     const mint = new registry.Mint(
       pda.mintProfile(profileId)[0],
       test_profile_owner.publicKey
@@ -201,10 +192,7 @@ describe("anchor_sola", () => {
 
   it("mint a default profile", async () => {
     const test_profile_owner = Keypair.generate();
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const profileId = global.counter;
+    const profileId = new anchor.BN(2);
     const params = {
       name: "MyDefaultProfile",
       creators: [
@@ -221,6 +209,7 @@ describe("anchor_sola", () => {
     };
 
     const ix = await profileProgram.mintDefaultProfile(
+      profileId,
       params,
       wallet.payer,
       test_profile_owner.publicKey
@@ -247,11 +236,6 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    console.log("update global:", global);
-    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
     const mint = new registry.Mint(
       pda.mintProfile(profileId)[0],
       test_profile_owner.publicKey
@@ -272,11 +256,7 @@ describe("anchor_sola", () => {
   });
 
   it("set default dispatcher", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-
-    const profileId = global.counter;
+    const profileId = new anchor.BN(3);
     const params = {
       name: "MyDispatcher",
       creators: [
@@ -293,6 +273,7 @@ describe("anchor_sola", () => {
     };
 
     const mintIx = await profileProgram.mintDefaultProfile(
+      profileId,
       params,
       wallet.payer,
       defaultDispatcher.publicKey
@@ -323,11 +304,6 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    console.log("update global:", global);
-    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
     const mint = new registry.Mint(
       pda.mintProfile(profileId)[0],
       defaultDispatcher.publicKey
@@ -368,7 +344,10 @@ describe("anchor_sola", () => {
       isMutable: true,
     };
 
+    const profileId = new anchor.BN(4);
+
     const ix = await profileProgram.mintDefaultProfile(
+      profileId,
       params,
       wallet.payer,
       test_profile_owner.publicKey
@@ -390,10 +369,6 @@ describe("anchor_sola", () => {
 
     await wait(200);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const profileId = global.counter.sub(new BN(1));
     const burnIx = await profileProgram.burnProfile(
       profileId,
       test_profile_owner
@@ -427,12 +402,8 @@ describe("anchor_sola", () => {
   });
 
   it("set dispatcher", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-
     const dispatcher = Keypair.generate();
-    const profileId = global.counter;
+    const profileId = new anchor.BN(5);
     const params = {
       name: "MyDispatcher",
       creators: [
@@ -449,6 +420,7 @@ describe("anchor_sola", () => {
     };
 
     const mintIx = await profileProgram.mintDefaultProfile(
+      profileId,
       params,
       wallet.payer,
       dispatcher.publicKey
@@ -484,11 +456,6 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    console.log("update global:", global);
-    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
     const mint = new registry.Mint(
       pda.mintProfile(profileId)[0],
       dispatcher.publicKey
@@ -514,14 +481,10 @@ describe("anchor_sola", () => {
   });
 
   it("set group controller", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-
     const dispatcher = Keypair.generate();
     const owner = Keypair.generate();
 
-    const profileId = global.counter;
+    const profileId = new anchor.BN(6);
     const params = {
       name: "MyDispatcher",
       creators: [
@@ -538,6 +501,7 @@ describe("anchor_sola", () => {
     };
 
     const mintIx = await profileProgram.mintDefaultProfile(
+      profileId,
       params,
       wallet.payer,
       owner.publicKey
@@ -563,11 +527,6 @@ describe("anchor_sola", () => {
 
     console.log("Transaction res:", res);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    console.log("update global:", global);
-    assert(global.counter.eq(profileId.add(new anchor.BN(1))));
     const mint = new registry.Mint(
       pda.mintProfile(profileId)[0],
       owner.publicKey
@@ -751,13 +710,11 @@ describe("anchor_sola", () => {
   });
 
   it("registers a class", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const classId = global.classCounter;
-    const profileId = global.counter;
+    const classId = new anchor.BN(1);
+    const profileId = new anchor.BN(11);
     const owner = Keypair.generate();
     const mintControllerIx = await profileProgram.mintGroupProfile(
+      profileId,
       {
         name: "test class controller",
         symbol: "TCC",
@@ -807,20 +764,14 @@ describe("anchor_sola", () => {
     assert(tokenClass.transferable == true);
     assert(tokenClass.revocable == false);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
   });
 
   it("set token class state", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const classId = global.classCounter;
-    const profileId = global.counter;
+    const classId = new anchor.BN(2);
+    const profileId = new anchor.BN(22);
     const owner = Keypair.generate();
     const mintControllerIx = await profileProgram.mintGroupProfile(
+      profileId,
       {
         name: "test class controller",
         symbol: "TCC",
@@ -870,10 +821,6 @@ describe("anchor_sola", () => {
     assert(tokenClass.transferable == true);
     assert(tokenClass.revocable == false);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
 
     console.log("owner set token class state");
 
@@ -931,13 +878,11 @@ describe("anchor_sola", () => {
   });
 
   it("set class generic", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const classId = global.classCounter;
-    const profileId = global.counter;
+    const classId = new anchor.BN(122);
+    const profileId = new anchor.BN(333);
     const owner = Keypair.generate();
     const mintControllerIx = await profileProgram.mintGroupProfile(
+      profileId,
       {
         name: "test class controller",
         symbol: "TCC",
@@ -986,11 +931,6 @@ describe("anchor_sola", () => {
     assert(tokenClass.fungible == false);
     assert(tokenClass.transferable == true);
     assert(tokenClass.revocable == false);
-
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
 
     console.log("owner set class generic");
 
@@ -1082,7 +1022,6 @@ describe("anchor_sola", () => {
   let badgeGlobal: {
     owner: anchor.web3.PublicKey;
     baseUri: string;
-    counter: anchor.BN;
   };
 
   it("init badge", async () => {
@@ -1100,21 +1039,18 @@ describe("anchor_sola", () => {
 
     badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
 
-    console.log("init badge global:", global);
+    console.log("init badge global:", badgeGlobal);
 
     assert(badgeGlobal.baseUri == "https://example.com/my-badge.json");
     assert(badgeGlobal.owner.equals(badgeOwner.publicKey));
-    assert(badgeGlobal.counter.eq(new anchor.BN(1)));
   });
 
   it("mint badge", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const classId = global.classCounter;
-    const profileId = global.counter;
+    const classId = new anchor.BN(9834);
+    const profileId = new anchor.BN(23456);
     const tokenClassOwner = Keypair.generate();
     const mintControllerIx = await profileProgram.mintGroupProfile(
+      profileId,
       {
         name: "test class controller",
         symbol: "TCC",
@@ -1164,18 +1100,16 @@ describe("anchor_sola", () => {
     assert(tokenClass.transferable == true);
     assert(tokenClass.revocable == false);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
+    const controllerId = tokenClass.controller;
 
     console.log("mint transferable badge without data");
 
     const myBadgeOwner = Keypair.generate();
-    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
+    const badgeId = new anchor.BN(1);
 
-    const badgeId = badgeGlobal.counter;
     const mintBadgeIx = await badgeProgram.mintBadge(
+      controllerId,
+      badgeId,
       classId,
       {
         name: "testBadge",
@@ -1198,8 +1132,7 @@ describe("anchor_sola", () => {
       myBadgeOwner.publicKey,
       tokenClassOwner
     );
-
-    await anchor.getProvider().sendAndConfirm(
+    const mintBadgeTx = await anchor.getProvider().sendAndConfirm(
       new Transaction()
         // 加钱！！！
         .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
@@ -1208,8 +1141,7 @@ describe("anchor_sola", () => {
       { skipPreflight: true }
     );
 
-    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
-    assert(badgeGlobal.counter.eq(badgeId.add(new anchor.BN(1))));
+    console.log("mintBadgeTx: ", mintBadgeTx);
 
     const badgeMint = new registry.Mint(
       pda.mintBadge(badgeId)[0],
@@ -1229,13 +1161,11 @@ describe("anchor_sola", () => {
   });
 
   it("mint nonTransferable badge", async () => {
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    const classId = global.classCounter;
-    const profileId = global.counter;
+    const classId = new anchor.BN(3566777);
+    const profileId = new anchor.BN(236);
     const tokenClassOwner = Keypair.generate();
     const mintControllerIx = await profileProgram.mintGroupProfile(
+      profileId,
       {
         name: "test class controller",
         symbol: "TCC",
@@ -1285,18 +1215,14 @@ describe("anchor_sola", () => {
     assert(tokenClass.transferable == false);
     assert(tokenClass.revocable == false);
 
-    global = await program.account.solaProfileGlobal.fetch(
-      pda.solaProfileGlobal()[0]
-    );
-    assert(global.classCounter.eq(classId.add(new anchor.BN(1))));
 
-    console.log("mint transferable badge without data");
-
+    console.log("mint non-transferable badge without data");
+    const controllerId = tokenClass.controller;
     const myBadgeOwner = Keypair.generate();
-    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
-
-    const badgeId = badgeGlobal.counter;
+    const badgeId = new anchor.BN(567);
     const mintBadgeIx = await badgeProgram.mintBadge(
+      controllerId,
+      badgeId,
       classId,
       {
         name: "testBadge",
@@ -1320,7 +1246,7 @@ describe("anchor_sola", () => {
       tokenClassOwner
     );
 
-    await anchor.getProvider().sendAndConfirm(
+    const mintBadgeTx = await anchor.getProvider().sendAndConfirm(
       new Transaction()
         // 加钱！！！
         .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 500_000 }))
@@ -1329,13 +1255,13 @@ describe("anchor_sola", () => {
       { skipPreflight: true }
     );
 
-    badgeGlobal = await program.account.badgeGlobal.fetch(pda.badgeGlobal()[0]);
-    assert(badgeGlobal.counter.eq(badgeId.add(new anchor.BN(1))));
+    console.log("mintBadgeTx: ", mintBadgeTx);
 
     const badgeMint = new registry.Mint(
       pda.mintBadge(badgeId)[0],
       myBadgeOwner.publicKey
     );
+
     const badgeState = await program.account.badgeState.fetch(
       pda.badgeState(badgeMint.masterMint)[0]
     );

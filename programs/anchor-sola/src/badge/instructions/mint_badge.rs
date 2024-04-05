@@ -1,11 +1,11 @@
 use crate::{
-    badge::state::{BadgeGlobal, BadgeState, GenericOrigins, LineageOrigins},
+    badge::state::{BadgeState, GenericOrigins, LineageOrigins},
     state::{CreatorsParam, SolaError},
     utils::create_non_transferable_mint,
     Dispatcher, IRegistryRef, TokenClass, TOKEN_SCHEMA_MAX_LEN,
 };
 use anchor_lang::prelude::*;
-use anchor_spl::{associated_token::AssociatedToken, metadata::Metadata, token_interface::*};
+use anchor_spl::{associated_token::AssociatedToken, metadata::Metadata, token_interface};
 use mpl_token_metadata::{
     instructions::{
         CreateCpi, CreateCpiAccounts, CreateInstructionArgs, MintCpi, MintCpiAccounts,
@@ -15,16 +15,8 @@ use mpl_token_metadata::{
 };
 
 #[derive(Accounts)]
-#[instruction(class_id: u64,origins: Vec<u64>)]
+#[instruction(badge_id: u64, )]
 pub struct MintBadge<'info> {
-    #[account(
-        mut,
-        seeds = [
-            "badge_global".as_bytes()
-        ],
-        bump,
-    )]
-    pub badge_global: Account<'info, BadgeGlobal>,
     /// CHECK:
     #[account(mut)]
     pub master_token: UncheckedAccount<'info>,
@@ -33,7 +25,7 @@ pub struct MintBadge<'info> {
         mut,
         seeds = [
             "mint_badge".as_bytes(),
-            &badge_global.counter.to_be_bytes()[..],
+            &badge_id.to_be_bytes(),
         ],
         bump
     )]
@@ -88,19 +80,19 @@ pub struct MintBadge<'info> {
         ],
         bump,
     )]
-    pub badge_state: Account<'info, BadgeState>,
+    pub badge_state: Box<Account<'info, BadgeState>>,
 
     #[account(
         init,
         payer = payer,
-        space = 8 + LineageOrigins::init_space(origins.len()),
+        space = 8 + LineageOrigins::init_space(10),
         seeds = [
             "lineage_origins".as_bytes(),
             master_mint.key().as_ref(),
         ],
         bump,
     )]
-    pub lineage_origins: Option<Account<'info, LineageOrigins>>,
+    pub lineage_origins: Option<Box<Account<'info, LineageOrigins>>>,
 
     #[account(
         init,
@@ -112,77 +104,194 @@ pub struct MintBadge<'info> {
         ],
         bump,
     )]
-    pub generic_origins: Option<Account<'info, GenericOrigins>>,
-
-    // register:
-    #[account(
-        seeds = [
-            "token_class".as_bytes(),
-            &class_id.to_be_bytes(),
-        ],
-        bump,
-    )]
-    pub token_class: Account<'info, TokenClass>,
-    /// CHECK:
-    #[account(
-        seeds = [
-            "mint_profile".as_bytes(),
-            &token_class.controller.to_be_bytes(),
-        ],
-        bump,
-    )]
-    pub profile_mint: UncheckedAccount<'info>,
-    /// CHECK:
-    pub profile_token: UncheckedAccount<'info>,
-    /// CHECK:
-    #[account(
-        seeds = [
-            "dispatcher".as_bytes(),
-            profile_mint.key().as_ref(),
-        ],
-        bump,
-    )]
-    pub dispatcher: UncheckedAccount<'info>,
-    #[account(
-        seeds = [
-            "default_dispatcher".as_bytes(),
-        ],
-        bump,
-    )]
-    pub default_dispatcher: Account<'info, Dispatcher>,
-    /// CHECK:
-    #[account(
-        seeds = [
-            "class_generic".as_bytes(),
-            token_class.key().as_ref(),
-        ],
-        bump,
-    )]
-    pub class_generic: UncheckedAccount<'info>,
+    pub generic_origins: Option<Box<Account<'info, GenericOrigins>>>,
 
     #[account(mut)]
     pub payer: Signer<'info>,
     pub publisher: Signer<'info>,
-    // #[account(
-    //     init_if_needed,
-    //     payer = payer,
-    //     space = 8 + BadgeState::INIT_SPACE,
-    //     seeds = [
-    //         "proxy_owner".as_bytes(),
-    //         to.key().as_ref(),
-    //     ],
-    //     bump,
-    // )]
-    // pub proxy_owner: Account<'info, ProxyOwner>,
-    /// CHECK: token owner
+    /// CHECK:
     pub to: UncheckedAccount<'info>,
     pub system_program: Program<'info, System>,
-    pub token_program: Program<'info, Token2022>,
+    pub token_program: Program<'info, token_interface::Token2022>,
     pub spl_ata_program: Program<'info, AssociatedToken>,
     pub metadata_program: Program<'info, Metadata>,
     /// CHECK:
     pub sysvar_instructions: UncheckedAccount<'info>,
     pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+#[instruction(class_id: u64)]
+pub struct MintCheck<'info> {
+    // register:
+    #[account(
+            seeds = [
+                "token_class".as_bytes(),
+                &class_id.to_be_bytes(),
+            ],
+            bump,
+        )]
+    pub token_class: Box<Account<'info, TokenClass>>,
+    /// CHECK:
+    #[account(
+            seeds = [
+                "mint_profile".as_bytes(),
+                &token_class.controller.to_be_bytes(),
+            ],
+            bump,
+        )]
+    pub profile_mint: UncheckedAccount<'info>,
+    /// CHECK:
+    pub profile_token: UncheckedAccount<'info>,
+    /// CHECK:
+    #[account(
+            seeds = [
+                "dispatcher".as_bytes(),
+                profile_mint.key().as_ref(),
+            ],
+            bump,
+        )]
+    pub dispatcher: UncheckedAccount<'info>,
+    #[account(
+            seeds = [
+                "default_dispatcher".as_bytes(),
+            ],
+            bump,
+        )]
+    pub default_dispatcher: Box<Account<'info, Dispatcher>>,
+    /// CHECK:
+    #[account(
+            seeds = [
+                "class_generic".as_bytes(),
+                token_class.key().as_ref(),
+            ],
+            bump,
+        )]
+    pub class_generic: UncheckedAccount<'info>,
+}
+
+#[inline(never)]
+fn create_account<'info, T>(
+    accounts: &mut &'info [AccountInfo<'info>],
+) -> anchor_lang::Result<Account<'info, T>>
+where
+    T: AccountSerialize + AccountDeserialize + Owner + Clone,
+{
+    if accounts.is_empty() {
+        return Err(ErrorCode::AccountNotEnoughKeys.into());
+    }
+    let account = &accounts[0];
+    *accounts = &accounts[1..];
+    Account::try_from(account)
+}
+
+#[inline(never)]
+fn create_unchecked_account<'info>(
+    accounts: &mut &'info [AccountInfo<'info>],
+) -> anchor_lang::Result<UncheckedAccount<'info>> {
+    if accounts.is_empty() {
+        return Err(ErrorCode::AccountNotEnoughKeys.into());
+    }
+    let account = &accounts[0];
+    *accounts = &accounts[1..];
+    Ok(UncheckedAccount::try_from(account))
+}
+
+impl<'info> MintCheck<'info> {
+    #[inline(never)]
+    fn from_remaining_accounts(
+        program_id: &anchor_lang::solana_program::pubkey::Pubkey,
+        remaining_accounts: &mut &'info [anchor_lang::solana_program::account_info::AccountInfo<
+            'info,
+        >],
+        class_id: u64,
+    ) -> anchor_lang::Result<MintCheck<'info>> {
+        let token_class: Box<anchor_lang::accounts::account::Account<TokenClass>> =
+            create_account(remaining_accounts)
+                .map(Box::new)
+                .map_err(|e| e.with_account_name("token_class"))?;
+
+        let profile_mint: UncheckedAccount = create_unchecked_account(remaining_accounts)
+            .map_err(|e| e.with_account_name("profile_mint"))?;
+
+        let profile_token: UncheckedAccount = create_unchecked_account(remaining_accounts)
+            .map_err(|e| e.with_account_name("profile_token"))?;
+
+        let dispatcher: UncheckedAccount = create_unchecked_account(remaining_accounts)
+            .map_err(|e| e.with_account_name("dispatcher"))?;
+
+        let default_dispatcher: Box<anchor_lang::accounts::account::Account<Dispatcher>> =
+            create_account(remaining_accounts)
+                .map(Box::new)
+                .map_err(|e| e.with_account_name("default_dispatcher"))?;
+
+        let class_generic: UncheckedAccount = create_unchecked_account(remaining_accounts)
+            .map_err(|e| e.with_account_name("class_generic"))?;
+        let (__pda_address, __bump) = Pubkey::find_program_address(
+            &["token_class".as_bytes(), &class_id.to_be_bytes()],
+            &program_id,
+        );
+        if token_class.key() != __pda_address {
+            return Err(anchor_lang::error::Error::from(
+                anchor_lang::error::ErrorCode::ConstraintSeeds,
+            )
+            .with_account_name("token_class")
+            .with_pubkeys((token_class.key(), __pda_address)));
+        }
+        let (__pda_address, __bump) = Pubkey::find_program_address(
+            &[
+                "mint_profile".as_bytes(),
+                &token_class.controller.to_be_bytes(),
+            ],
+            &program_id,
+        );
+        if profile_mint.key() != __pda_address {
+            return Err(anchor_lang::error::Error::from(
+                anchor_lang::error::ErrorCode::ConstraintSeeds,
+            )
+            .with_account_name("profile_mint")
+            .with_pubkeys((profile_mint.key(), __pda_address)));
+        }
+        let (__pda_address, __bump) = Pubkey::find_program_address(
+            &["dispatcher".as_bytes(), profile_mint.key().as_ref()],
+            &program_id,
+        );
+        if dispatcher.key() != __pda_address {
+            return Err(anchor_lang::error::Error::from(
+                anchor_lang::error::ErrorCode::ConstraintSeeds,
+            )
+            .with_account_name("dispatcher")
+            .with_pubkeys((dispatcher.key(), __pda_address)));
+        }
+        let (__pda_address, __bump) =
+            Pubkey::find_program_address(&["default_dispatcher".as_bytes()], &program_id);
+        if default_dispatcher.key() != __pda_address {
+            return Err(anchor_lang::error::Error::from(
+                anchor_lang::error::ErrorCode::ConstraintSeeds,
+            )
+            .with_account_name("default_dispatcher")
+            .with_pubkeys((default_dispatcher.key(), __pda_address)));
+        }
+        let (__pda_address, __bump) = Pubkey::find_program_address(
+            &["class_generic".as_bytes(), token_class.key().as_ref()],
+            &program_id,
+        );
+        if class_generic.key() != __pda_address {
+            return Err(anchor_lang::error::Error::from(
+                anchor_lang::error::ErrorCode::ConstraintSeeds,
+            )
+            .with_account_name("class_generic")
+            .with_pubkeys((class_generic.key(), __pda_address)));
+        }
+        Ok(MintCheck {
+            token_class,
+            profile_mint,
+            profile_token,
+            dispatcher,
+            default_dispatcher,
+            class_generic,
+        })
+    }
 }
 
 #[derive(AnchorDeserialize, AnchorSerialize)]
@@ -197,14 +306,32 @@ pub struct MintBadgeParams {
     pub schema: String,
 }
 
-pub fn mint_badge_handler(
-    ctx: Context<MintBadge>,
+pub fn mint_badge_handler<'info>(
+    ctx: Context<'_, '_, 'info, 'info, MintBadge<'info>>,
+    badge_id: u64,
     class_id: u64,
-    params: MintBadgeParams,
     origins: Vec<u64>,
-) -> Result<u64> {
+    params: MintBadgeParams,
+) -> Result<()> {
     let accounts = ctx.accounts;
 
+    check(accounts, &params)?;
+
+    let remaining_accounts = ctx.remaining_accounts;
+    let program_id = ctx.program_id;
+
+    let check = registry(accounts, program_id, remaining_accounts, origins, class_id)?;
+
+    check.handle(class_id, badge_id, accounts, &ctx.bumps, &params)?;
+
+    initialize(accounts, params)?;
+
+    mint(accounts)?;
+
+    Ok(())
+}
+#[inline(never)]
+fn check(accounts: &mut MintBadge<'_>, params: &MintBadgeParams) -> Result<()> {
     require_gt!(TOKEN_SCHEMA_MAX_LEN, params.schema.len());
 
     require!(
@@ -212,13 +339,32 @@ pub fn mint_badge_handler(
         SolaError::OriginsMismatch
     );
 
+    Ok(())
+}
+
+pub struct RegistryCheck {
+    get_token_class_transferable: bool,
+    get_token_class_revocable: bool,
+}
+
+#[inline(never)]
+fn registry<'info>(
+    accounts: &mut MintBadge<'info>,
+    program_id: &Pubkey,
+    mut remaining_accounts: &'info [AccountInfo<'info>],
+    origins: Vec<u64>,
+    class_id: u64,
+) -> Result<RegistryCheck> {
+    let mint_check =
+        MintCheck::from_remaining_accounts(program_id, &mut remaining_accounts, class_id)?;
+
     let registry = IRegistryRef {
-        token_class: &accounts.token_class,
-        profile_mint: &accounts.profile_mint,
-        profile_token: &accounts.profile_token,
-        dispatcher: &accounts.dispatcher,
-        default_dispatcher: &accounts.default_dispatcher,
-        class_generic: &accounts.class_generic,
+        token_class: &mint_check.token_class,
+        profile_mint: (*mint_check.profile_mint).as_ref(),
+        profile_token: (*mint_check.profile_token).as_ref(),
+        dispatcher: &mint_check.dispatcher,
+        default_dispatcher: &mint_check.default_dispatcher,
+        class_generic: &mint_check.class_generic,
         spl_token_program: &accounts.token_program,
     };
 
@@ -240,46 +386,56 @@ pub fn mint_badge_handler(
         linege.origins = origins;
     }
 
-    let badge_id = accounts.badge_global.counter;
-
-    *accounts.badge_state = BadgeState {
-        metatable: class_id,
-        weights: params.weights,
-        token_schema: params.schema.clone(),
-        master_mint: accounts.master_mint.key(),
-        master_metadata: accounts.master_metadata.key(),
-        master_edition: accounts.master_edition.key(),
-        badge_id: badge_id.to_be_bytes(),
-        badge_bump: [ctx.bumps.badge_state],
-        mint_bump: [ctx.bumps.master_mint],
-    };
-
-    if !registry.get_token_class_transferable() {
-        create_non_transferable_mint(
-            &accounts.master_mint,
-            &accounts.master_metadata,
-            &accounts.badge_state,
-            &accounts.payer,
-            mpl_token_metadata::types::TokenStandard::ProgrammableNonFungible,
-            None,
-            &accounts.token_program,
-            &[&accounts.badge_state.mint_seeds()[..]],
-        )?;
-    }
-
-    if registry.get_token_class_revocable() {
-        return Err(SolaError::NotSupport.into());
-    }
-
-    initialize(accounts, params)?;
-
-    mint(accounts)?;
-
-    accounts.badge_global.counter += 1;
-
-    Ok(badge_id)
+    Ok(RegistryCheck {
+        get_token_class_transferable: registry.get_token_class_transferable(),
+        get_token_class_revocable: registry.get_token_class_revocable(),
+    })
 }
 
+impl RegistryCheck {
+    #[inline(never)]
+    pub fn handle(
+        &self,
+        class_id: u64,
+        badge_id: u64,
+        accounts: &mut MintBadge<'_>,
+        bumps: &MintBadgeBumps,
+        params: &MintBadgeParams,
+    ) -> Result<()> {
+        **accounts.badge_state = BadgeState {
+            metatable: class_id,
+            weights: params.weights,
+            token_schema: params.schema.clone(),
+            master_mint: accounts.master_mint.key(),
+            master_metadata: accounts.master_metadata.key(),
+            master_edition: accounts.master_edition.key(),
+            badge_id: badge_id.to_be_bytes(),
+            badge_bump: [bumps.badge_state],
+            mint_bump: [bumps.master_mint],
+        };
+
+        if !self.get_token_class_transferable {
+            create_non_transferable_mint(
+                &accounts.master_mint,
+                &accounts.master_metadata,
+                &accounts.badge_state,
+                &accounts.payer,
+                mpl_token_metadata::types::TokenStandard::ProgrammableNonFungible,
+                None,
+                &accounts.token_program,
+                &[&accounts.badge_state.mint_seeds()[..]],
+            )?;
+        }
+
+        if self.get_token_class_revocable {
+            return Err(SolaError::NotSupport.into());
+        }
+
+        Ok(())
+    }
+}
+
+#[inline(never)]
 fn initialize(accounts: &mut MintBadge<'_>, params: MintBadgeParams) -> Result<()> {
     let creators = None::<()>
         .map(|_| {
@@ -346,6 +502,7 @@ fn initialize(accounts: &mut MintBadge<'_>, params: MintBadgeParams) -> Result<(
     Ok(())
 }
 
+#[inline(never)]
 fn mint(accounts: &mut MintBadge<'_>) -> Result<()> {
     // Initialize
     let metadata_program = accounts.metadata_program.to_account_info();

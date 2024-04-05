@@ -1,7 +1,7 @@
 use crate::{
     profile::state::SolaProfile,
     state::{CreatorsParam, SolaError},
-    DefaultProfileId, IsProfileCreator, SolaProfileGlobal,
+    DefaultProfileId, IsProfileCreator,
 };
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, metadata::Metadata, token_interface::*};
@@ -14,15 +14,8 @@ use mpl_token_metadata::{
 };
 
 #[derive(Accounts)]
+#[instruction(profile_id: u64)]
 pub struct MintProfile<'info> {
-    #[account(
-        mut,
-        seeds = [
-            "sola_profile_global".as_bytes()
-        ],
-        bump,
-    )]
-    pub sola_profile_global: Account<'info, SolaProfileGlobal>,
     #[account(
         seeds = [
             "sola_profile_creator".as_bytes(),
@@ -50,7 +43,7 @@ pub struct MintProfile<'info> {
         mut,
         seeds = [
             "mint_profile".as_bytes(),
-            &sola_profile_global.counter.to_be_bytes()[..],
+            &profile_id.to_be_bytes(),
         ],
         bump
     )]
@@ -130,19 +123,16 @@ pub struct MintProfileParams {
     pub is_mutable: bool,
 }
 
-pub fn mint_profile_handler(ctx: Context<MintProfile>, params: MintProfileParams) -> Result<u64> {
+pub fn mint_profile_handler(
+    ctx: Context<MintProfile>,
+    profile_id: u64,
+    params: MintProfileParams,
+) -> Result<()> {
     let accounts = ctx.accounts;
-
-    let profile_id = accounts.sola_profile_global.counter;
 
     if let Some(default_profile) = accounts.address_default_profiles.as_deref_mut() {
         default_profile.profile_id = profile_id;
     }
-
-    msg!(
-        "befor mint counter:{:?}",
-        accounts.sola_profile_global.counter
-    );
 
     require!(
         accounts.sola_creator.is_profile_creator,
@@ -159,13 +149,7 @@ pub fn mint_profile_handler(ctx: Context<MintProfile>, params: MintProfileParams
 
     mint(accounts)?;
 
-    accounts.sola_profile_global.counter += 1;
-
-    msg!(
-        "after mint counter:{:?}",
-        accounts.sola_profile_global.counter
-    );
-    Ok(profile_id)
+    Ok(())
 }
 
 fn initialize(

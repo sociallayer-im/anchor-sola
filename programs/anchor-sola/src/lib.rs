@@ -29,14 +29,16 @@ pub mod anchor_sola {
         Ok(())
     }
 
-    pub fn mint_badge(
-        ctx: Context<MintBadge>,
+    #[inline(never)]
+    pub fn mint_badge<'info>(
+        ctx: Context<'_, '_, 'info, 'info, MintBadge<'info>>,
+        badge_id: u64,
         class_id: u64,
-        params: MintBadgeParams,
         origins: Vec<u64>,
-    ) -> Result<u64> {
-        let res = mint_badge_handler(ctx, class_id, params, origins)?;
-        Ok(res)
+        params: MintBadgeParams,
+    ) -> Result<()> {
+        mint_badge_handler(ctx, badge_id, class_id, origins, params)?;
+        Ok(())
     }
 
     pub fn initializee(
@@ -48,9 +50,13 @@ pub mod anchor_sola {
         Ok(())
     }
 
-    pub fn mint_profile(ctx: Context<MintProfile>, params: MintProfileParams) -> Result<u64> {
-        let profile_id = profile::mint_profile_handler(ctx, params)?;
-        Ok(profile_id)
+    pub fn mint_profile(
+        ctx: Context<MintProfile>,
+        profile_id: u64,
+        params: MintProfileParams,
+    ) -> Result<()> {
+        profile::mint_profile_handler(ctx, profile_id, params)?;
+        Ok(())
     }
 
     pub fn burn_profile(ctx: Context<BurnProfile>, profile_id: u64) -> Result<()> {

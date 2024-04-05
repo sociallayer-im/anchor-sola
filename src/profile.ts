@@ -34,7 +34,6 @@ export class ProfileProgram {
     return this.program.methods
       .burnProfile(profileId)
       .accounts({
-        solaProfileGlobal: pda.solaProfileGlobal()[0],
         addressDefaultProfiles: pda.solaDefaultProfiles(owner.publicKey)[0],
         masterToken: mint.masterToken,
         masterMint: mint.masterMint,
@@ -75,25 +74,18 @@ export class ProfileProgram {
   }
 
   async mintDefaultProfile(
+    profileId: anchor.BN,
     params: MintProfileParams,
     payer: web3.Keypair,
     to: web3.PublicKey,
     publisher?: web3.Keypair
   ): Promise<web3.TransactionInstruction> {
-    const solaProfileGlobal = pda.solaProfileGlobal()[0];
-    const profileId = (
-      await this.program.account.solaProfileGlobal.fetch(
-        solaProfileGlobal,
-        "confirmed"
-      )
-    ).counter;
     const profileMint = pda.mintProfile(profileId)[0];
     const solaProfile = pda.solaProfile(profileMint)[0];
     const mint = new Mint(profileMint, to);
     return this.program.methods
-      .mintProfile(params)
+      .mintProfile(profileId, params)
       .accounts({
-        solaProfileGlobal,
         solaCreator: pda.solaCreator(
           publisher ? publisher.publicKey : payer.publicKey
         )[0],
@@ -119,25 +111,18 @@ export class ProfileProgram {
   }
 
   async mintGroupProfile(
+    profileId: anchor.BN,
     params: MintProfileParams,
     payer: web3.Keypair,
     to: web3.PublicKey,
     publisher?: web3.Keypair
   ): Promise<web3.TransactionInstruction> {
-    const solaProfileGlobal = pda.solaProfileGlobal()[0];
-    const profileId = (
-      await this.program.account.solaProfileGlobal.fetch(
-        solaProfileGlobal,
-        "confirmed"
-      )
-    ).counter;
     const profileMint = pda.mintProfile(profileId)[0];
     const solaProfile = pda.solaProfile(profileMint)[0];
     const mint = new Mint(profileMint, to);
     return this.program.methods
-      .mintProfile(params)
+      .mintProfile(profileId, params)
       .accounts({
-        solaProfileGlobal,
         solaCreator: pda.solaCreator(
           publisher ? publisher.publicKey : payer.publicKey
         )[0],
@@ -171,7 +156,6 @@ export class ProfileProgram {
     return this.program.methods
       .register(classId, profileId, params)
       .accounts({
-        solaProfileGlobal: pda.solaProfileGlobal()[0],
         tokenClass: pda.tokenClass(classId)[0],
         payer: payer.publicKey,
         systemProgram: web3.SystemProgram.programId,
@@ -374,5 +358,43 @@ export class ProfileProgram {
       })
       .signers([owner])
       .instruction();
+  }
+
+
+  /// 返回默认的profile id
+  /// 需要错误处理，如果没有默认的profile id会报错
+  /// 网络连接失败也会报错
+  async featchDefaultProfileId(owner: web3.PublicKey): Promise<anchor.BN> {
+    const profileId = await
+      this.program.account
+        .defaultProfileId
+        .fetch(pda.solaDefaultProfiles(owner)[0]);
+
+    return profileId.profileId;
+  }
+
+  async featchAllProfile(owner: web3.PublicKey, commitment?: web3.Commitment): Promise<{
+    profileId: anchor.BN;
+    mint: web3.PublicKey,
+    metadata: web3.PublicKey,
+    edition: web3.PublicKey,
+    addressDefaultProfiles: web3.PublicKey | null | undefined
+  }[]> {
+    const allTokens = (await this.program.provider.connection.getParsedTokenAccountsByOwner(owner, { programId: TOKEN_2022_PROGRAM_ID }, commitment ? commitment : "confirmed")).value.map(token => {
+      return pda.solaProfile(token.pubkey)[0];
+    });
+
+    const profiles = (await this.program.account.solaProfile.fetchMultiple(allTokens)).filter(profile => profile)
+      .map(profile => {
+        return {
+          profileId: new anchor.BN(profile.profileId, 8, "be"),
+          mint: profile.masterMint,
+          metadata: profile.masterMetadata,
+          edition: profile.masterEdition,
+          addressDefaultProfiles: profile.addressDefaultProfiles ? profile.addressDefaultProfiles : null
+        }
+      });
+
+    return profiles;
   }
 }

@@ -1,4 +1,4 @@
-use crate::{profile::state::SolaProfile, state::SolaError, DefaultProfileId, SolaProfileGlobal};
+use crate::{profile::state::SolaProfile, state::SolaError, DefaultProfileId};
 use anchor_lang::prelude::*;
 use anchor_spl::{associated_token::AssociatedToken, metadata::Metadata, token_interface::*};
 use mpl_token_metadata::instructions::BurnInstructionArgs;
@@ -6,14 +6,6 @@ use mpl_token_metadata::instructions::BurnInstructionArgs;
 #[derive(Accounts)]
 #[instruction(profile_id: u64)]
 pub struct BurnProfile<'info> {
-    #[account(
-        mut,
-        seeds = [
-            "sola_profile_global".as_bytes()
-        ],
-        bump,
-    )]
-    pub sola_profile_global: Account<'info, SolaProfileGlobal>,
     #[account(
         mut,
         seeds = [

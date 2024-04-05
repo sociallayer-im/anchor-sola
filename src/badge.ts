@@ -36,6 +36,8 @@ export class BadgeProgram {
   }
 
   async mintBadge(
+    profileId: anchor.BN,
+    badgeId: anchor.BN,
     classId: anchor.BN,
     params: MintBadgeParams,
     payer: web3.Keypair,
@@ -43,6 +45,8 @@ export class BadgeProgram {
     publisher?: web3.Keypair
   ): Promise<web3.TransactionInstruction> {
     return this._mintBadge(
+      profileId,
+      badgeId,
       classId,
       params,
       [],
@@ -55,6 +59,8 @@ export class BadgeProgram {
   }
 
   async _mintBadge(
+    profileId: anchor.BN,
+    badgeId: anchor.BN,
     classId: anchor.BN,
     params: MintBadgeParams,
     origins: anchor.BN[],
@@ -64,20 +70,16 @@ export class BadgeProgram {
     lineageOrigins?: undefined,
     genericOrigins?: undefined
   ): Promise<web3.TransactionInstruction> {
-    const badgeGlobal = pda.badgeGlobal()[0];
-    const badgeId = (await this.program.account.badgeGlobal.fetch(badgeGlobal))
-      .counter;
     const badgeMint = pda.mintBadge(badgeId)[0];
     const mint = new Mint(badgeMint, to);
-    const register = await IRegistry.new(this.program, classId);
+    const register = new IRegistry(classId, profileId);
     const registerMint = new Mint(
       register.profileMint,
       publisher ? publisher.publicKey : payer.publicKey
     );
     return this.program.methods
-      .mintBadge(classId, params, origins)
+      .mintBadge(badgeId, classId, origins, params)
       .accounts({
-        badgeGlobal,
         masterToken: mint.masterToken,
         masterMint: mint.masterMint,
         masterMetadata: mint.masterMetadata,
@@ -90,12 +92,6 @@ export class BadgeProgram {
         genericOrigins: genericOrigins
           ? pda.genericOrigins(badgeMint)[0]
           : null,
-        tokenClass: register.tokenClass,
-        profileMint: register.profileMint,
-        profileToken: registerMint.masterToken,
-        dispatcher: register.dispatcher,
-        defaultDispatcher: register.defaultDispatcher,
-        classGeneric: register.classGeneric,
         payer: payer.publicKey,
         publisher: publisher ? publisher.publicKey : payer.publicKey,
         to,
@@ -106,11 +102,28 @@ export class BadgeProgram {
         sysvarInstructions: web3.SYSVAR_INSTRUCTIONS_PUBKEY,
         rent: web3.SYSVAR_RENT_PUBKEY,
       })
+      .remainingAccounts([
+        register.tokenClass,
+        register.profileMint,
+        registerMint.masterToken,
+        register.dispatcher,
+        register.defaultDispatcher,
+        register.classGeneric,]
+        .map(account => {
+          return {
+            pubkey: account,
+            isSigner: false,
+            isWritable: false,
+          }
+        })
+      )
       .signers(publisher ? [payer, publisher] : [payer])
       .instruction();
   }
 
   async mintLineageBadge(
+    profileId: anchor.BN,
+    badgeId: anchor.BN,
     classId: anchor.BN,
     params: MintBadgeParams,
     origins: anchor.BN[],
@@ -120,6 +133,8 @@ export class BadgeProgram {
   ): Promise<web3.TransactionInstruction> {
     assert(origins.length != 0);
     return this._mintBadge(
+      profileId,
+      badgeId,
       classId,
       params,
       origins,
@@ -132,6 +147,8 @@ export class BadgeProgram {
   }
 
   async mintGenericBadge(
+    profileId: anchor.BN,
+    badgeId: anchor.BN,
     classId: anchor.BN,
     params: MintBadgeParams,
     genericOrigins: anchor.BN,
@@ -140,6 +157,8 @@ export class BadgeProgram {
     publisher?: web3.Keypair
   ): Promise<web3.TransactionInstruction> {
     return this._mintBadge(
+      profileId,
+      badgeId,
       classId,
       params,
       [genericOrigins],
@@ -149,5 +168,46 @@ export class BadgeProgram {
       null,
       undefined
     );
+  }
+
+
+  /// 具体的nft数据看这个教程：https://developers.metaplex.com/token-metadata/fetch
+  async featchBadges(owner: web3.PublicKey, commitment?: web3.Commitment): Promise<{
+    badgeId: anchor.BN;
+    metaTable: anchor.BN;
+    weights: anchor.BN;
+    tokenSchema: string;
+    mint: web3.PublicKey;
+    metadata: web3.PublicKey;
+    edition: web3.PublicKey;
+  }[]> {
+    /// 主要是改动这里，现在是通过owner
+    const allTokens = (await this.program.provider.connection.getParsedTokenAccountsByOwner(owner, { programId: TOKEN_2022_PROGRAM_ID }, commitment ? commitment : "confirmed")).value
+      .map(token => {
+        return pda.badgeState(token.pubkey)[0];
+      });
+    /// 类似的可以换成publisher：
+    // 
+    // import { fetchAllDigitalAssetByCreator } from '@metaplex-foundation/mpl-token-metadata'
+    // // Assets such that the creator is first in the Creator array.
+    // const assetsA = await fetchAllDigitalAssetByCreator(umi, creator)
+    // // Assets such that the creator is second in the Creator array.
+    // const assetsB = await fetchAllDigitalAssetByCreator(umi, creator, {
+    //   position: 2,
+    // })
+    const badges = (await this.program.account.badgeState.fetchMultiple(allTokens)).filter(badge => badge)
+      .map(badge => {
+        return {
+          badgeId: new anchor.BN(badge.badgeId, 8, "be"),
+          metaTable: badge.metatable,
+          weights: badge.weights,
+          tokenSchema: badge.tokenSchema,
+          mint: badge.masterMint,
+          metadata: badge.masterMetadata,
+          edition: badge.masterEdition
+        }
+      });
+
+    return badges;
   }
 }

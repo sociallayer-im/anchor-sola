@@ -10,13 +10,13 @@ anchor_sola = "7UYNekL1ASR39gd2wtrk7Ne1RUhQYUCEBUMLfayTbtmm"
 [registry]
 url = "https://api.apr.dev"
 
-# [provider]
-# cluster = "Localnet"
-# wallet = "/Users/cupnfish/.config/solana/id.json"
-
 [provider]
-cluster = "devnet"
+cluster = "Localnet"
 wallet = "./dev-id.json"
+
+# [provider]
+# cluster = "devnet"
+# wallet = "./dev-id.json"
 
 
 [scripts]
