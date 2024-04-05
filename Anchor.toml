@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.localnet]
-anchor_sola = "7UYNekL1ASR39gd2wtrk7Ne1RUhQYUCEBUMLfayTbtmm"
+anchor_sola = "EQyfu4KXuX8svatnYyfSHFSBGfgNsVSi8ZChuJosiu2N"
 
 [registry]
 url = "https://api.apr.dev"

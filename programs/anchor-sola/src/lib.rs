@@ -15,7 +15,7 @@ pub use profile::{
 };
 pub use state::*;
 
-declare_id!("7UYNekL1ASR39gd2wtrk7Ne1RUhQYUCEBUMLfayTbtmm");
+declare_id!("EQyfu4KXuX8svatnYyfSHFSBGfgNsVSi8ZChuJosiu2N");
 
 #[program]
 pub mod anchor_sola {
